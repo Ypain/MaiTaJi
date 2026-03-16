@@ -1,7 +1,6 @@
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 import { cookies } from 'next/headers';
 import { createHash } from 'crypto';
-import { User } from '@/storage/database/shared/schema';
 
 export interface AuthUser {
   id: string;
