@@ -12,13 +12,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, User, LogOut, Menu } from 'lucide-react';
+import { Camera, User, LogOut, Menu, Settings } from 'lucide-react';
 
 interface User {
   id: string;
   email: string;
   name: string;
   avatar?: string | null;
+  role?: string;
 }
 
 export default function Navbar() {
@@ -106,6 +107,17 @@ export default function Navbar() {
                       <span>我的收藏</span>
                     </Link>
                   </DropdownMenuItem>
+                  {user.role === 'admin' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="cursor-pointer">
+                          <Settings className="mr-2 h-4 w-4" />
+                          <span>后台管理</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />

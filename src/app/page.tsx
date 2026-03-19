@@ -8,7 +8,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import { Camera, Play, X, Settings } from 'lucide-react';
+import { Camera, Play, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 // 分类配置 - 麦塔记
@@ -162,7 +162,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
           <p className="text-gray-600">加载中...</p>
@@ -172,26 +172,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
-      {/* Header */}
-      <header className="bg-white/90 backdrop-blur-sm sticky top-0 z-50 border-b border-amber-200">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-amber-700">
-            麦塔记
-          </h1>
-          <Button
-            asChild
-            variant="ghost"
-            className="text-gray-600 hover:text-amber-600 hover:bg-amber-50"
-          >
-            <a href="/admin">
-              <Settings className="h-5 w-5 mr-2" />
-              后台管理
-            </a>
-          </Button>
-        </div>
-      </header>
-
+    <div className="min-h-screen">
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Tabs value={activeCategory} onValueChange={(v) => {
@@ -334,13 +315,6 @@ export default function HomePage() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Footer */}
-      <footer className="bg-white/90 backdrop-blur-sm border-t border-amber-200 mt-12 py-6">
-        <div className="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
-          <p>© 2024 麦塔记 - 记录美好时刻</p>
-        </div>
-      </footer>
     </div>
   );
 }

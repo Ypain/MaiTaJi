@@ -7,6 +7,7 @@ export interface AuthUser {
   email: string;
   name: string;
   avatar?: string | null;
+  role?: string;
 }
 
 export function hashPassword(password: string): string {
@@ -30,7 +31,7 @@ export async function createUser(email: string, name: string, password: string):
       name,
       password_hash: passwordHash,
     })
-    .select('id, email, name, avatar')
+    .select('id, email, name, avatar, role')
     .single();
   
   if (error || !data) {
@@ -43,6 +44,7 @@ export async function createUser(email: string, name: string, password: string):
     email: data.email,
     name: data.name,
     avatar: data.avatar,
+    role: data.role || 'user',
   };
 }
 
@@ -51,7 +53,7 @@ export async function authenticateUser(email: string, password: string): Promise
   
   const { data: user, error } = await client
     .from('users')
-    .select('id, email, name, avatar, password_hash')
+    .select('id, email, name, avatar, password_hash, role')
     .eq('email', email)
     .single();
   
@@ -69,6 +71,7 @@ export async function authenticateUser(email: string, password: string): Promise
     email: user.email,
     name: user.name,
     avatar: user.avatar,
+    role: user.role || 'user',
   };
 }
 
@@ -83,7 +86,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   const client = getSupabaseClient();
   const { data: user, error } = await client
     .from('users')
-    .select('id, email, name, avatar')
+    .select('id, email, name, avatar, role')
     .eq('id', userId)
     .single();
   
@@ -96,6 +99,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     email: user.email,
     name: user.name,
     avatar: user.avatar,
+    role: user.role || 'user',
   };
 }
 

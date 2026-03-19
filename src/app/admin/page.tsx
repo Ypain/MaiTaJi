@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -53,12 +54,42 @@ interface Product {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [category, setCategory] = useState('clothing');
   const [subcategory, setSubcategory] = useState('');
   const [productName, setProductName] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 检查管理员权限
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user?.role === 'admin') {
+            setIsAdmin(true);
+          } else {
+            toast.error('无权限访问后台管理');
+            router.push('/');
+          }
+        } else {
+          toast.error('请先登录');
+          router.push('/login');
+        }
+      } catch (error) {
+        console.error('权限检查失败:', error);
+        router.push('/login');
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   // 获取商品列表
   const fetchProducts = async () => {
@@ -75,8 +106,10 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (isAdmin) {
+      fetchProducts();
+    }
+  }, [isAdmin]);
 
   // 上传图片
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,6 +219,23 @@ export default function AdminPage() {
       toast.error('初始化数据失败');
     }
   };
+
+  // 权限检查中
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">验证权限中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 非管理员
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-6">
