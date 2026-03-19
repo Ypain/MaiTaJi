@@ -54,14 +54,19 @@ export async function authenticateUser(username: string, password: string): Prom
   const { data: user, error } = await client
     .from('users')
     .select('id, email, name, avatar, password_hash')
-    .eq('email', username) // 使用 email 字段匹配账号名
+    .eq('email', username)
     .single();
   
   if (error || !user) {
     return null;
   }
   
+  if (!user.password_hash) {
+    return null;
+  }
+  
   const isValid = verifyPassword(password, user.password_hash);
+  
   if (!isValid) {
     return null;
   }
@@ -71,7 +76,7 @@ export async function authenticateUser(username: string, password: string): Prom
   
   return {
     id: user.id,
-    username: user.email, // 从 email 字段读取账号名
+    username: user.email,
     name: user.name,
     avatar: user.avatar,
     role: isAdmin ? 'admin' : 'user',
