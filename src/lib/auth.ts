@@ -84,34 +84,44 @@ export async function authenticateUser(username: string, password: string): Prom
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get('user_id')?.value;
-  
-  if (!userId) {
+  try {
+    const cookieStore = await cookies();
+    const userIdCookie = cookieStore.get('user_id');
+    
+    console.log('[getCurrentUser] cookie user_id:', userIdCookie?.value || '未找到');
+    
+    if (!userIdCookie?.value) {
+      return null;
+    }
+    
+    const userId = userIdCookie.value;
+    
+    const client = getSupabaseClient();
+    const { data: user, error } = await client
+      .from('users')
+      .select('id, email, name, avatar')
+      .eq('id', userId)
+      .single();
+    
+    if (error || !user) {
+      console.error('[getCurrentUser] 查询用户失败:', error);
+      return null;
+    }
+    
+    // 检查是否是管理员账号
+    const isAdmin = user.email === '18700889961';
+    
+    return {
+      id: user.id,
+      username: user.email, // 从 email 字段读取账号名
+      name: user.name,
+      avatar: user.avatar,
+      role: isAdmin ? 'admin' : 'user',
+    };
+  } catch (error) {
+    console.error('[getCurrentUser] 获取用户信息失败:', error);
     return null;
   }
-  
-  const client = getSupabaseClient();
-  const { data: user, error } = await client
-    .from('users')
-    .select('id, email, name, avatar')
-    .eq('id', userId)
-    .single();
-  
-  if (error || !user) {
-    return null;
-  }
-  
-  // 检查是否是管理员账号
-  const isAdmin = user.email === '18700889961';
-  
-  return {
-    id: user.id,
-    username: user.email, // 从 email 字段读取账号名
-    name: user.name,
-    avatar: user.avatar,
-    role: isAdmin ? 'admin' : 'user',
-  };
 }
 
 export async function logout(): Promise<void> {

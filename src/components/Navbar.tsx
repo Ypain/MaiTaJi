@@ -24,11 +24,12 @@ interface User {
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    setMounted(true);
     fetchUser();
   }, []);
 
@@ -43,8 +44,6 @@ export default function Navbar() {
       }
     } catch (error) {
       console.error('获取用户信息失败:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -60,6 +59,23 @@ export default function Navbar() {
       console.error('退出失败:', error);
     }
   };
+
+  // 服务端渲染时不显示用户状态，避免 hydration 错误
+  if (!mounted) {
+    return (
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Camera className="h-8 w-8 text-amber-600" />
+              <span className="text-xl font-bold text-gray-900">麦塔记</span>
+            </Link>
+            <div className="h-8 w-20 bg-gray-200 animate-pulse rounded" />
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -85,72 +101,85 @@ export default function Navbar() {
 
           {/* User Menu */}
           <div className="flex items-center gap-4">
-            {loading ? (
-              <div className="h-8 w-20 bg-gray-200 animate-pulse rounded" />
-            ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                      <AvatarFallback className="bg-amber-100 text-amber-700">
-                        {user.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex flex-col space-y-1 p-2">
-                    <p className="text-sm font-medium leading-none">{user.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">账号：{user.username}</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/favorites" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>我的收藏</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  {user.role === 'admin' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin" className="cursor-pointer">
-                          <Settings className="mr-2 h-4 w-4" />
-                          <span>后台管理</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>退出登录</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link href="/login">
-                  <Button variant="ghost" className="text-gray-700">
-                    登录
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button className="bg-amber-600 hover:bg-amber-700">
-                    注册
-                  </Button>
-                </Link>
-              </div>
-            )}
+            {user ? (
+              <>
+                {/* 用户头像下拉菜单 */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={user.avatar || undefined} alt={user.name} />
+                        <AvatarFallback className="bg-amber-500 text-white font-medium">
+                          {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden md:inline text-sm font-medium text-gray-700">{user.name}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end">
+                    <div className="flex flex-col space-y-1 p-2">
+                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">账号：{user.username}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/favorites" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>我的收藏</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    {user.role === 'admin' && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin" className="cursor-pointer text-amber-600">
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>后台管理</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>退出登录</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2 text-gray-700 hover:text-amber-600"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              <Menu className="h-6 w-6" />
-            </button>
+                {/* Mobile menu button */}
+                <button
+                  className="md:hidden p-2 text-gray-700 hover:text-amber-600"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+              </>
+            ) : (
+              <>
+                {/* 登录/注册按钮 */}
+                <div className="flex items-center gap-2">
+                  <Link href="/login">
+                    <Button variant="ghost" className="text-gray-700">
+                      登录
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button className="bg-amber-600 hover:bg-amber-700">
+                      注册
+                    </Button>
+                  </Link>
+                </div>
+
+                {/* Mobile menu button */}
+                <button
+                  className="md:hidden p-2 text-gray-700 hover:text-amber-600"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 

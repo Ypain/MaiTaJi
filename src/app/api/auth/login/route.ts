@@ -28,13 +28,16 @@ export async function POST(request: NextRequest) {
       user 
     });
     
+    // 设置 cookie - 使用更宽松的配置
     response.cookies.set('user_id', user.id, {
       httpOnly: true,
-      secure: false, // 开发环境设为 false
+      secure: false,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7天
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
+    
+    console.log(`[登录成功] 用户 ${user.username} (${user.id}) 已登录，cookie 已设置`);
     
     return response;
   } catch (error) {

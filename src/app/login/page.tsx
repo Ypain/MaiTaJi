@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +13,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +37,24 @@ export default function LoginPage() {
         return;
       }
 
-      // 登录成功，刷新页面
-      window.location.href = '/';
+      // 登录成功，验证 cookie 是否设置成功
+      console.log('登录成功，用户信息:', data.user);
+      
+      // 验证 cookie 是否正确设置
+      const meResponse = await fetch('/api/auth/me', {
+        credentials: 'include',
+      });
+      
+      if (meResponse.ok) {
+        const meData = await meResponse.json();
+        console.log('验证用户信息成功:', meData);
+        // 使用硬刷新确保所有状态更新
+        window.location.href = '/';
+      } else {
+        console.error('验证用户信息失败');
+        setError('登录成功但无法获取用户信息，请刷新页面');
+        setLoading(false);
+      }
     } catch (error) {
       console.error('登录失败:', error);
       setError('登录失败，请稍后重试');
