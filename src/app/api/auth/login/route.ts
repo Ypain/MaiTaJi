@@ -28,22 +28,26 @@ export async function POST(request: NextRequest) {
       user 
     });
     
-    // 检测是否是 HTTPS 环境
-    const isSecure = request.headers.get('x-forwarded-proto') === 'https' || 
-                     request.nextUrl.protocol === 'https:';
+    // 检测是否是 HTTPS 访问
+    // 1. 检查 X-Forwarded-Proto 头（代理设置）
+    // 2. 检查请求域名是否是 .coze.site（生产域名）
+    const forwardedProto = request.headers.get('x-forwarded-proto');
+    const host = request.headers.get('host') || '';
+    const isCozeDomain = host.includes('.coze.site');
+    const isSecure = forwardedProto === 'https' || isCozeDomain;
     
-    console.log(`[登录] 协议: ${request.nextUrl.protocol}, X-Forwarded-Proto: ${request.headers.get('x-forwarded-proto')}, isSecure: ${isSecure}`);
+    console.log(`[登录] Host: ${host}, X-Forwarded-Proto: ${forwardedProto}, isCozeDomain: ${isCozeDomain}, isSecure: ${isSecure}`);
     
-    // 设置 cookie - 根据环境动态配置
+    // 设置 cookie
     response.cookies.set('user_id', user.id, {
       httpOnly: true,
-      secure: isSecure, // HTTPS 环境下必须为 true
-      sameSite: isSecure ? 'none' : 'lax', // HTTPS 下需要 'none' 才能跨站携带
+      secure: isSecure,
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
     
-    console.log(`[登录成功] 用户 ${user.username} (${user.id}) 已登录，cookie 已设置 (secure: ${isSecure}, sameSite: ${isSecure ? 'none' : 'lax'})`);
+    console.log(`[登录成功] 用户 ${user.username} 已登录，cookie secure: ${isSecure}`);
     
     return response;
   } catch (error) {
