@@ -5,6 +5,10 @@ export async function GET(request: NextRequest) {
   try {
     // 调试：检查请求头中的 cookie
     const cookieHeader = request.headers.get('cookie');
+    const isSecure = request.headers.get('x-forwarded-proto') === 'https' || 
+                     request.nextUrl.protocol === 'https:';
+    
+    console.log('[/api/auth/me] 协议:', request.nextUrl.protocol, 'X-Forwarded-Proto:', request.headers.get('x-forwarded-proto'));
     console.log('[/api/auth/me] 请求 cookie:', cookieHeader || '无');
     
     const user = await getCurrentUser();

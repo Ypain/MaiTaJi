@@ -28,16 +28,22 @@ export async function POST(request: NextRequest) {
       user 
     });
     
-    // 设置 cookie - 使用更宽松的配置
+    // 检测是否是 HTTPS 环境
+    const isSecure = request.headers.get('x-forwarded-proto') === 'https' || 
+                     request.nextUrl.protocol === 'https:';
+    
+    console.log(`[登录] 协议: ${request.nextUrl.protocol}, X-Forwarded-Proto: ${request.headers.get('x-forwarded-proto')}, isSecure: ${isSecure}`);
+    
+    // 设置 cookie - 根据环境动态配置
     response.cookies.set('user_id', user.id, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: isSecure, // HTTPS 环境下必须为 true
+      sameSite: isSecure ? 'none' : 'lax', // HTTPS 下需要 'none' 才能跨站携带
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
     
-    console.log(`[登录成功] 用户 ${user.username} (${user.id}) 已登录，cookie 已设置`);
+    console.log(`[登录成功] 用户 ${user.username} (${user.id}) 已登录，cookie 已设置 (secure: ${isSecure}, sameSite: ${isSecure ? 'none' : 'lax'})`);
     
     return response;
   } catch (error) {
