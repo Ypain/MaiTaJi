@@ -5,20 +5,20 @@ import { cookies } from 'next/headers';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { username, password } = body;
     
-    if (!email || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { error: '邮箱和密码都是必填项' },
+        { error: '账号和密码都是必填项' },
         { status: 400 }
       );
     }
     
-    const user = await authenticateUser(email, password);
+    const user = await authenticateUser(username, password);
     
     if (!user) {
       return NextResponse.json(
-        { error: '邮箱或密码错误' },
+        { error: '账号或密码错误' },
         { status: 401 }
       );
     }

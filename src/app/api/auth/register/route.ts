@@ -5,11 +5,18 @@ import { cookies } from 'next/headers';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, name, password } = body;
+    const { username, password } = body;
     
-    if (!email || !name || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { error: '邮箱、用户名和密码都是必填项' },
+        { error: '账号和密码都是必填项' },
+        { status: 400 }
+      );
+    }
+    
+    if (!username.trim()) {
+      return NextResponse.json(
+        { error: '账号不能为空' },
         { status: 400 }
       );
     }
@@ -21,11 +28,11 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const user = await createUser(email, name, password);
+    const user = await createUser(username, password);
     
     if (!user) {
       return NextResponse.json(
-        { error: '注册失败，邮箱可能已被使用' },
+        { error: '注册失败，账号可能已被使用' },
         { status: 400 }
       );
     }

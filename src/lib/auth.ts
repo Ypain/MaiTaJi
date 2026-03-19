@@ -4,7 +4,7 @@ import { createHash } from 'crypto';
 
 export interface AuthUser {
   id: string;
-  email: string;
+  username: string;
   name: string;
   avatar?: string | null;
   role?: string;
@@ -20,18 +20,18 @@ export function verifyPassword(password: string, hash: string): boolean {
   return passwordHash === hash;
 }
 
-export async function createUser(email: string, name: string, password: string): Promise<AuthUser | null> {
+export async function createUser(username: string, password: string): Promise<AuthUser | null> {
   const client = getSupabaseClient();
   const passwordHash = hashPassword(password);
   
   const { data, error } = await client
     .from('users')
     .insert({
-      email,
-      name,
+      email: username, // 使用 email 字段存储账号名
+      name: username, // 默认用户名与账号相同
       password_hash: passwordHash,
     })
-    .select('id, email, name, avatar, role')
+    .select('id, email, name, avatar')
     .single();
   
   if (error || !data) {
@@ -41,20 +41,20 @@ export async function createUser(email: string, name: string, password: string):
   
   return {
     id: data.id,
-    email: data.email,
+    username: data.email, // 从 email 字段读取账号名
     name: data.name,
     avatar: data.avatar,
-    role: data.role || 'user',
+    role: 'user',
   };
 }
 
-export async function authenticateUser(email: string, password: string): Promise<AuthUser | null> {
+export async function authenticateUser(username: string, password: string): Promise<AuthUser | null> {
   const client = getSupabaseClient();
   
   const { data: user, error } = await client
     .from('users')
-    .select('id, email, name, avatar, password_hash, role')
-    .eq('email', email)
+    .select('id, email, name, avatar, password_hash')
+    .eq('email', username) // 使用 email 字段匹配账号名
     .single();
   
   if (error || !user) {
@@ -66,12 +66,15 @@ export async function authenticateUser(email: string, password: string): Promise
     return null;
   }
   
+  // 检查是否是管理员账号
+  const isAdmin = user.email === '18700889961';
+  
   return {
     id: user.id,
-    email: user.email,
+    username: user.email, // 从 email 字段读取账号名
     name: user.name,
     avatar: user.avatar,
-    role: user.role || 'user',
+    role: isAdmin ? 'admin' : 'user',
   };
 }
 
@@ -86,7 +89,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   const client = getSupabaseClient();
   const { data: user, error } = await client
     .from('users')
-    .select('id, email, name, avatar, role')
+    .select('id, email, name, avatar')
     .eq('id', userId)
     .single();
   
@@ -94,12 +97,15 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null;
   }
   
+  // 检查是否是管理员账号
+  const isAdmin = user.email === '18700889961';
+  
   return {
     id: user.id,
-    email: user.email,
+    username: user.email, // 从 email 字段读取账号名
     name: user.name,
     avatar: user.avatar,
-    role: user.role || 'user',
+    role: isAdmin ? 'admin' : 'user',
   };
 }
 
