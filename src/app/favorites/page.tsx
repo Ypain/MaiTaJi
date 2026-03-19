@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AnimalCard from '@/components/AnimalCard';
 import { Button } from '@/components/ui/button';
-import { PawPrint, Heart } from 'lucide-react';
+import { Camera, Heart } from 'lucide-react';
 import Link from 'next/link';
 
 interface Animal {
@@ -81,7 +81,7 @@ export default function FavoritesPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
           <p className="text-gray-600">加载中...</p>
         </div>
       </div>
@@ -106,13 +106,13 @@ export default function FavoritesPage() {
       {favorites.length === 0 ? (
         <div className="text-center py-12">
           <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg mb-2">还没有收藏任何动物</p>
+          <p className="text-gray-600 text-lg mb-2">还没有收藏任何商品</p>
           <p className="text-gray-500 text-sm mb-6">
-            浏览动物列表，点击爱心图标即可收藏
+            浏览商品列表，点击爱心图标即可收藏
           </p>
           <Link href="/">
-            <Button className="bg-emerald-600 hover:bg-emerald-700">
-              去探索动物
+            <Button className="bg-amber-600 hover:bg-amber-700">
+              去探索商品
             </Button>
           </Link>
         </div>

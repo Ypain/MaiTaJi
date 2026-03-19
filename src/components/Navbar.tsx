@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PawPrint, User, LogOut, Menu } from 'lucide-react';
+import { Camera, User, LogOut, Menu } from 'lucide-react';
 
 interface User {
   id: string;
@@ -62,17 +62,17 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <PawPrint className="h-8 w-8 text-emerald-600" />
-            <span className="text-xl font-bold text-gray-900">动物世界</span>
+            <Camera className="h-8 w-8 text-amber-600" />
+            <span className="text-xl font-bold text-gray-900">麦塔记</span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/" className="text-gray-700 hover:text-emerald-600 transition-colors">
+            <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors">
               首页
             </Link>
             {user && (
-              <Link href="/favorites" className="text-gray-700 hover:text-emerald-600 transition-colors">
+              <Link href="/favorites" className="text-gray-700 hover:text-amber-600 transition-colors">
                 我的收藏
               </Link>
             )}
@@ -88,7 +88,7 @@ export default function Navbar() {
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                      <AvatarFallback className="bg-emerald-100 text-emerald-700">
+                      <AvatarFallback className="bg-amber-100 text-amber-700">
                         {user.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -121,7 +121,7 @@ export default function Navbar() {
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button className="bg-emerald-600 hover:bg-emerald-700">
+                  <Button className="bg-amber-600 hover:bg-amber-700">
                     注册
                   </Button>
                 </Link>
@@ -130,7 +130,7 @@ export default function Navbar() {
 
             {/* Mobile menu button */}
             <button
-              className="md:hidden p-2 text-gray-700 hover:text-emerald-600"
+              className="md:hidden p-2 text-gray-700 hover:text-amber-600"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <Menu className="h-6 w-6" />

@@ -91,20 +91,20 @@ export default function AnimalCard({ animal, onFavorite, isFavorite }: AnimalCar
         <div className="flex flex-col gap-2 text-sm text-gray-600">
           {animal.habitat && (
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+              <MapPin className="h-4 w-4 text-amber-600 flex-shrink-0" />
               <span className="line-clamp-1">{animal.habitat}</span>
             </div>
           )}
           {animal.diet && (
             <div className="flex items-center gap-2">
-              <Leaf className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+              <Leaf className="h-4 w-4 text-amber-600 flex-shrink-0" />
               <span className="line-clamp-1">{animal.diet}</span>
             </div>
           )}
         </div>
         
         <Link href={`/animal/${animal.id}`}>
-          <Button variant="outline" className="w-full mt-2 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300">
+          <Button variant="outline" className="w-full mt-2 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300">
             查看详情
           </Button>
         </Link>

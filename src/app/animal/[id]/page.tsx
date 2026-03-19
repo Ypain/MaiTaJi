@@ -100,7 +100,7 @@ export default function AnimalDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
           <p className="text-gray-600">加载中...</p>
         </div>
       </div>
@@ -182,9 +182,9 @@ export default function AnimalDetailPage() {
           {/* Info Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {animal.habitat && (
-              <div className="bg-emerald-50 rounded-lg p-4">
+              <div className="bg-amber-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-5 w-5 text-emerald-600" />
+                  <MapPin className="h-5 w-5 text-amber-600" />
                   <h3 className="font-semibold text-gray-900">栖息地</h3>
                 </div>
                 <p className="text-gray-700">{animal.habitat}</p>
