@@ -7,14 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Camera, Play, X, Settings } from 'lucide-react';
 import { toast } from 'sonner';
-import Image from 'next/image';
 
-// 分类配置
+// 分类配置 - 麦塔记
 const CATEGORIES = {
   clothing: {
     name: '服装区',
@@ -63,7 +60,6 @@ export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [showcases, setShowcases] = useState<Showcase[]>([]);
   const [activeCategory, setActiveCategory] = useState('clothing');
-  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -73,9 +69,6 @@ export default function HomePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 初始化数据
-        await fetch('/api/init-data', { method: 'POST' });
-
         // 获取商品
         const productsResponse = await fetch('/api/products');
         const productsResult = await productsResponse.json();
@@ -106,7 +99,6 @@ export default function HomePage() {
 
     setUploading(true);
     try {
-      // 上传图片/视频
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'showcases');
@@ -121,7 +113,6 @@ export default function HomePage() {
         throw new Error(uploadResult.error || '上传失败');
       }
 
-      // 创建买家展示
       const showcaseResponse = await fetch('/api/showcases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -137,7 +128,6 @@ export default function HomePage() {
       }
 
       toast.success('上传成功');
-      // 重新获取列表
       const showcasesResponse = await fetch('/api/showcases');
       const showcasesResult = await showcasesResponse.json();
       if (showcasesResult.success) {
@@ -154,22 +144,12 @@ export default function HomePage() {
     }
   };
 
-  // 获取当前分类的商品
-  const getFilteredProducts = () => {
-    let filtered = products.filter((p) => p.category === activeCategory);
-    if (activeSubcategory) {
-      filtered = filtered.filter((p) => p.subcategory === activeSubcategory);
-    }
-    return filtered;
-  };
-
   // 获取分类下的所有二级分类商品（按二级分类分组）
   const getProductsBySubcategory = () => {
     const categoryProducts = products.filter((p) => p.category === activeCategory);
     const subcategories = CATEGORIES[activeCategory as keyof typeof CATEGORIES].subcategories;
     
     if (Object.keys(subcategories).length === 0) {
-      // 美妆区没有二级分类
       return [{ key: 'main', name: '', products: categoryProducts }];
     }
 
@@ -182,9 +162,9 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
           <p className="text-gray-600">加载中...</p>
         </div>
       </div>
@@ -192,17 +172,17 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-pink-100">
+      <header className="bg-white/90 backdrop-blur-sm sticky top-0 z-50 border-b border-amber-200">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-            买她趣
+          <h1 className="text-2xl font-bold text-amber-700">
+            麦塔记
           </h1>
           <Button
             asChild
             variant="ghost"
-            className="text-gray-600 hover:text-pink-600"
+            className="text-gray-600 hover:text-amber-600 hover:bg-amber-50"
           >
             <a href="/admin">
               <Settings className="h-5 w-5 mr-2" />
@@ -216,14 +196,13 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Tabs value={activeCategory} onValueChange={(v) => {
           setActiveCategory(v);
-          setActiveSubcategory(null);
         }}>
-          <TabsList className="grid w-full grid-cols-3 bg-white border border-pink-100 mb-6">
+          <TabsList className="grid w-full grid-cols-3 bg-white border border-amber-200 mb-6">
             {Object.entries(CATEGORIES).map(([key, val]) => (
               <TabsTrigger
                 key={key}
                 value={key}
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+                className="data-[state=active]:bg-amber-600 data-[state=active]:text-white"
               >
                 {val.name}
               </TabsTrigger>
@@ -236,7 +215,7 @@ export default function HomePage() {
                 <div key={group.key || 'main'} className="mb-8">
                   {group.name && (
                     <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                      <span className="w-1 h-6 bg-gradient-to-b from-pink-500 to-purple-600 rounded mr-3"></span>
+                      <span className="w-1 h-6 bg-amber-600 rounded mr-3"></span>
                       {group.name}
                     </h2>
                   )}
@@ -244,7 +223,7 @@ export default function HomePage() {
                     {group.products.map((product) => (
                       <Card
                         key={product.id}
-                        className="group cursor-pointer overflow-hidden border-pink-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                        className="group cursor-pointer overflow-hidden border-amber-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                         onClick={() => setPreviewImage(product.image_url)}
                       >
                         <div className="aspect-square relative overflow-hidden">
@@ -266,11 +245,11 @@ export default function HomePage() {
           ))}
         </Tabs>
 
-        {/* 买家展示区 */}
+        {/* 用户展示区 */}
         <section className="mt-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-            <span className="w-1 h-8 bg-gradient-to-b from-pink-500 to-purple-600 rounded mr-3"></span>
-            买家展示区
+            <span className="w-1 h-8 bg-amber-600 rounded mr-3"></span>
+            用户展示区
           </h2>
 
           {/* 展示列表 - 一行最多6个 */}
@@ -291,7 +270,7 @@ export default function HomePage() {
                 ) : (
                   <img
                     src={showcase.media_url}
-                    alt={showcase.title || '买家展示'}
+                    alt={showcase.title || '用户展示'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 )}
@@ -305,7 +284,7 @@ export default function HomePage() {
           </div>
 
           {/* 底部长驻上传入口 */}
-          <div className="bg-white rounded-xl p-4 border border-pink-100">
+          <div className="bg-white rounded-xl p-4 border border-amber-200">
             <input
               ref={fileInputRef}
               type="file"
@@ -316,7 +295,7 @@ export default function HomePage() {
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+              className="w-full bg-amber-600 hover:bg-amber-700"
             >
               {uploading ? (
                 <span className="flex items-center gap-2">
@@ -329,7 +308,7 @@ export default function HomePage() {
               ) : (
                 <span className="flex items-center gap-2">
                   <Camera className="h-5 w-5" />
-                  上传你的买家秀（支持图片和视频）
+                  上传你的展示（支持图片和视频）
                 </span>
               )}
             </Button>
@@ -357,9 +336,9 @@ export default function HomePage() {
       </Dialog>
 
       {/* Footer */}
-      <footer className="bg-white/80 backdrop-blur-sm border-t border-pink-100 mt-12 py-6">
+      <footer className="bg-white/90 backdrop-blur-sm border-t border-amber-200 mt-12 py-6">
         <div className="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
-          <p>© 2024 买她趣 - 发现美好，分享美丽</p>
+          <p>© 2024 麦塔记 - 记录美好时刻</p>
         </div>
       </footer>
     </div>

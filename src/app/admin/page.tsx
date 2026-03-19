@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { X, Upload, Trash2, Plus, Image as ImageIcon } from 'lucide-react';
+import { Upload, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // 分类配置
@@ -93,7 +93,6 @@ export default function AdminPage() {
       return;
     }
 
-    // 美妆区不需要二级分类，其他需要
     if (category !== 'beauty' && !subcategory) {
       toast.error('请选择二级分类');
       return;
@@ -101,7 +100,6 @@ export default function AdminPage() {
 
     setUploading(true);
     try {
-      // 上传图片
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'products');
@@ -116,7 +114,6 @@ export default function AdminPage() {
         throw new Error(uploadResult.error || '上传失败');
       }
 
-      // 创建商品
       const productResponse = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -173,13 +170,13 @@ export default function AdminPage() {
   // 初始化数据
   const handleInitData = async () => {
     try {
-      const response = await fetch('/api/init-data', {
+      const response = await fetch('/api/init-data?force=true', {
         method: 'POST',
       });
 
       const result = await response.json();
       if (result.success) {
-        toast.success(`数据初始化成功！添加了 ${result.productsCount} 个商品和 ${result.showcasesCount} 个买家展示`);
+        toast.success(`数据初始化成功！添加了 ${result.productsCount} 个商品和 ${result.showcasesCount} 个用户展示`);
         fetchProducts();
       } else {
         toast.info(result.message || '数据已存在');
@@ -191,23 +188,23 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-            买她趣 - 后台管理
+          <h1 className="text-3xl font-bold text-amber-700">
+            麦塔记 - 后台管理
           </h1>
           <div className="flex gap-3">
             <Button
               onClick={handleInitData}
               variant="outline"
-              className="border-pink-200 hover:bg-pink-50"
+              className="border-amber-200 hover:bg-amber-50"
             >
               初始化示例数据
             </Button>
             <Button
               asChild
-              className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+              className="bg-amber-600 hover:bg-amber-700"
             >
               <a href="/">返回首页</a>
             </Button>
@@ -215,7 +212,7 @@ export default function AdminPage() {
         </div>
 
         {/* 上传区域 */}
-        <Card className="mb-8 border-pink-100 shadow-lg">
+        <Card className="mb-8 border-amber-200 shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl text-gray-800">添加商品</CardTitle>
           </CardHeader>
@@ -275,7 +272,7 @@ export default function AdminPage() {
                 <Button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+                  className="w-full bg-amber-600 hover:bg-amber-700"
                 >
                   {uploading ? (
                     <span className="flex items-center gap-2">
@@ -299,14 +296,14 @@ export default function AdminPage() {
 
         {/* 商品列表 */}
         <Tabs defaultValue="clothing" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white border border-pink-100">
-            <TabsTrigger value="clothing" className="data-[state=active]:bg-pink-500 data-[state=active]:text-white">
+          <TabsList className="grid w-full grid-cols-3 bg-white border border-amber-200">
+            <TabsTrigger value="clothing" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               服装区
             </TabsTrigger>
-            <TabsTrigger value="beauty" className="data-[state=active]:bg-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="beauty" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               美妆区
             </TabsTrigger>
-            <TabsTrigger value="jewelry" className="data-[state=active]:bg-pink-500 data-[state=active]:text-white">
+            <TabsTrigger value="jewelry" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               首饰区
             </TabsTrigger>
           </TabsList>
@@ -317,7 +314,7 @@ export default function AdminPage() {
                 {products
                   .filter((p) => p.category === cat)
                   .map((product) => (
-                    <Card key={product.id} className="group relative overflow-hidden border-pink-100">
+                    <Card key={product.id} className="group relative overflow-hidden border-amber-100">
                       <div className="aspect-square relative">
                         <img
                           src={product.image_url}

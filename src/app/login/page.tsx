@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PawPrint, Mail, Lock } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -48,15 +48,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-md border-amber-200">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <PawPrint className="h-12 w-12 text-emerald-600" />
-          </div>
-          <CardTitle className="text-2xl font-bold">欢迎回来</CardTitle>
-          <CardDescription>
-            登录您的账户，探索更多动物知识
+          <CardTitle className="text-3xl font-bold text-amber-700">麦塔记</CardTitle>
+          <CardDescription className="text-gray-600">
+            登录您的账户
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -101,7 +98,7 @@ export default function LoginPage() {
             
             <Button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              className="w-full bg-amber-600 hover:bg-amber-700"
               disabled={loading}
             >
               {loading ? '登录中...' : '登录'}
@@ -109,7 +106,7 @@ export default function LoginPage() {
             
             <div className="text-center text-sm text-gray-600">
               还没有账户？{' '}
-              <Link href="/register" className="text-emerald-600 hover:underline">
+              <Link href="/register" className="text-amber-600 hover:underline">
                 立即注册
               </Link>
             </div>

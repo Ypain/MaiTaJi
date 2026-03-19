@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PawPrint, Mail, Lock, User } from 'lucide-react';
+import { Mail, Lock, User } from 'lucide-react';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -61,15 +61,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-md border-amber-200">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <PawPrint className="h-12 w-12 text-emerald-600" />
-          </div>
-          <CardTitle className="text-2xl font-bold">创建账户</CardTitle>
-          <CardDescription>
-            注册账户，开始探索动物世界
+          <CardTitle className="text-3xl font-bold text-amber-700">麦塔记</CardTitle>
+          <CardDescription className="text-gray-600">
+            创建您的账户
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -146,7 +143,7 @@ export default function RegisterPage() {
             
             <Button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              className="w-full bg-amber-600 hover:bg-amber-700"
               disabled={loading}
             >
               {loading ? '注册中...' : '注册'}
@@ -154,7 +151,7 @@ export default function RegisterPage() {
             
             <div className="text-center text-sm text-gray-600">
               已有账户？{' '}
-              <Link href="/login" className="text-emerald-600 hover:underline">
+              <Link href="/login" className="text-amber-600 hover:underline">
                 立即登录
               </Link>
             </div>
