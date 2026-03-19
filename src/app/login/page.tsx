@@ -27,6 +27,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
 
@@ -34,15 +35,15 @@ export default function LoginPage() {
 
       if (!response.ok) {
         setError(data.error || '登录失败');
+        setLoading(false);
         return;
       }
 
-      router.push('/');
-      router.refresh();
+      // 登录成功，刷新页面
+      window.location.href = '/';
     } catch (error) {
       console.error('登录失败:', error);
       setError('登录失败，请稍后重试');
-    } finally {
       setLoading(false);
     }
   };

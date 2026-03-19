@@ -44,6 +44,7 @@ export default function RegisterPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
 
@@ -51,15 +52,15 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         setError(data.error || '注册失败');
+        setLoading(false);
         return;
       }
 
-      router.push('/');
-      router.refresh();
+      // 注册成功，刷新页面
+      window.location.href = '/';
     } catch (error) {
       console.error('注册失败:', error);
       setError('注册失败，请稍后重试');
-    } finally {
       setLoading(false);
     }
   };
