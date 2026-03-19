@@ -170,6 +170,15 @@ export default function Navbar() {
                   我的收藏
                 </Link>
               )}
+              {user?.role === 'admin' && (
+                <Link 
+                  href="/admin" 
+                  className="px-4 py-2 text-amber-600 hover:bg-amber-50 rounded font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  后台管理
+                </Link>
+              )}
             </div>
           </div>
         )}
