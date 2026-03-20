@@ -27,7 +27,7 @@ export default function RootLayout({
                 <span className="text-lg font-semibold text-white">麦塔记</span>
               </div>
               <p className="text-sm">
-                © 2024 麦塔记. 记录美好时刻
+                © 2026 麦塔记. 记录美好时刻
               </p>
             </div>
           </div>
