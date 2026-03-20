@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Trash2, Image, Video, Loader2 } from 'lucide-react';
+import { Upload, Trash2, Image, Video, Loader2, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { AGE_CATEGORIES, type AgeCategory, type MediaType } from '@/lib/constants';
 
@@ -27,7 +27,10 @@ interface MediaItem {
 
 export default function AdminPage() {
   const router = useRouter();
+  // 上传用类目
   const [selectedCategory, setSelectedCategory] = useState<AgeCategory>('出生');
+  // 筛选用类目（全部或特定类目）
+  const [filterCategory, setFilterCategory] = useState<string>('全部');
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingPreviews, setPendingPreviews] = useState<string[]>([]);
@@ -70,8 +73,12 @@ export default function AdminPage() {
     try {
       const response = await fetch('/api/age-category-content');
       const result = await response.json();
+      console.log('获取内容结果:', result);
       if (result.success) {
-        setMediaItems(result.data);
+        setMediaItems(result.data || []);
+      } else {
+        console.error('获取内容失败:', result.error);
+        toast.error(result.error || '获取内容失败');
       }
     } catch (error) {
       console.error('获取内容失败:', error);
@@ -86,6 +93,16 @@ export default function AdminPage() {
       fetchMediaItems();
     }
   }, [isAdmin]);
+
+  // 根据筛选条件过滤内容
+  const filteredItems = filterCategory === '全部' 
+    ? mediaItems 
+    : mediaItems.filter(item => item.category === filterCategory);
+
+  // 统计每个类目的内容数量
+  const getCategoryCount = (category: string) => {
+    return mediaItems.filter(item => item.category === category).length;
+  };
 
   // 选择文件
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,28 +166,37 @@ export default function AdminPage() {
           formData.append('file', file);
           formData.append('folder', `age-category/${selectedCategory}`);
 
+          console.log('上传文件:', file.name, '到类目:', selectedCategory);
+          
           const uploadResponse = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
           });
 
           const uploadResult = await uploadResponse.json();
+          console.log('上传结果:', uploadResult);
+          
           if (!uploadResult.success) {
             throw new Error(uploadResult.error || '上传失败');
           }
 
           // 保存到数据库
+          const saveData = {
+            category: selectedCategory,
+            mediaUrl: uploadResult.data.url,
+            mediaType: mediaType,
+          };
+          console.log('保存到数据库:', saveData);
+          
           const saveResponse = await fetch('/api/age-category-content', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              category: selectedCategory,
-              mediaUrl: uploadResult.data.url,
-              mediaType: mediaType,
-            }),
+            body: JSON.stringify(saveData),
           });
 
           const saveResult = await saveResponse.json();
+          console.log('保存结果:', saveResult);
+          
           if (!saveResult.success) {
             throw new Error(saveResult.error || '保存失败');
           }
@@ -183,7 +209,7 @@ export default function AdminPage() {
       }
 
       if (successCount > 0) {
-        toast.success(`成功上传 ${successCount} 个文件`);
+        toast.success(`成功上传 ${successCount} 个文件到「${selectedCategory}」类目`);
       }
       if (failCount > 0) {
         toast.error(`${failCount} 个文件上传失败`);
@@ -245,7 +271,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-amber-700">
             麦塔记 - 管理员后台
@@ -266,7 +292,7 @@ export default function AdminPage() {
           <CardContent>
             {/* 类目选择 */}
             <div className="mb-6">
-              <Label className="text-base font-medium mb-2 block">选择年龄段类目</Label>
+              <Label className="text-base font-medium mb-2 block">选择上传的年龄段类目</Label>
               <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as AgeCategory)}>
                 <SelectTrigger className="w-full md:w-[280px]">
                   <SelectValue placeholder="选择类目" />
@@ -274,7 +300,7 @@ export default function AdminPage() {
                 <SelectContent>
                   {AGE_CATEGORIES.map((category) => (
                     <SelectItem key={category} value={category}>
-                      {category}
+                      {category} ({getCategoryCount(category)}个)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -308,7 +334,7 @@ export default function AdminPage() {
             {pendingFiles.length > 0 && (
               <div className="mb-6">
                 <Label className="text-base font-medium mb-2 block">
-                  待上传文件 ({pendingFiles.length} 个)
+                  待上传到「{selectedCategory}」类目的文件 ({pendingFiles.length} 个)
                 </Label>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {pendingFiles.map((file, index) => (
@@ -364,25 +390,59 @@ export default function AdminPage() {
         <Card className="border-amber-200 shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl text-gray-800">
-              已上传内容
+              已上传内容（共 {mediaItems.length} 个）
               {loading && <Loader2 className="inline-block ml-2 h-4 w-4 animate-spin" />}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {mediaItems.length === 0 ? (
+            {/* 类目筛选 */}
+            <div className="mb-6">
+              <Label className="text-base font-medium mb-3 block">按类目筛选</Label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={filterCategory === '全部' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFilterCategory('全部')}
+                  className={filterCategory === '全部' ? 'bg-amber-600 hover:bg-amber-700' : 'border-amber-200'}
+                >
+                  全部 ({mediaItems.length})
+                </Button>
+                {AGE_CATEGORIES.map((category) => {
+                  const count = getCategoryCount(category);
+                  return (
+                    <Button
+                      key={category}
+                      variant={filterCategory === category ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setFilterCategory(category)}
+                      className={filterCategory === category ? 'bg-amber-600 hover:bg-amber-700' : 'border-amber-200'}
+                    >
+                      {category} ({count})
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 内容网格 */}
+            {filteredItems.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                <Image className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <p>暂无上传内容</p>
+                <FolderOpen className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p>{filterCategory === '全部' ? '暂无上传内容' : `「${filterCategory}」类目暂无内容`}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {mediaItems.map((item) => (
-                  <div key={item.id} className="group relative aspect-square rounded-lg overflow-hidden border border-amber-200 bg-white">
+                {filteredItems.map((item) => (
+                  <div key={item.id} className="group relative aspect-square rounded-lg overflow-hidden border border-amber-200 bg-white shadow-sm hover:shadow-md transition-shadow">
                     {item.media_type === 'image' ? (
                       <img
                         src={item.media_url}
                         alt={item.category}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder.png';
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-100">
@@ -391,12 +451,13 @@ export default function AdminPage() {
                     )}
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="absolute top-1 right-1 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      className="absolute top-1 right-1 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1.5">
-                      {item.category}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2">
+                      <div className="font-medium">{item.category}</div>
+                      <div className="text-gray-300 text-[10px]">{item.media_type === 'image' ? '图片' : '视频'}</div>
                     </div>
                   </div>
                 ))}
