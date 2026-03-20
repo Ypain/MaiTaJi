@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Trash2, Image, Video, Loader2, FolderOpen, Download, X, ZoomIn, Share2 } from 'lucide-react';
+import { Upload, Trash2, Video, Loader2, FolderOpen, Download, X, ZoomIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { AGE_CATEGORIES, type AgeCategory, type MediaType } from '@/lib/constants';
 
@@ -44,12 +44,6 @@ export default function AdminPage() {
   const isMobile = () => {
     if (typeof window === 'undefined') return false;
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  };
-
-  // 检测是否支持 Web Share API
-  const supportsShare = () => {
-    if (typeof window === 'undefined') return false;
-    return 'share' in navigator && 'canShare' in navigator;
   };
 
   // 检测是否支持 File System Access API
@@ -229,41 +223,26 @@ export default function AdminPage() {
     }
   };
 
-  // 下载文件 - 优化手机端体验
+  // 保存图片 - 手机端提示长按保存
   const handleDownload = async (item: MediaItem) => {
     setDownloadingId(item.id);
     
     try {
       const url = item.media_url;
-      const ext = item.media_type === 'image' ? 'png' : 'mp4';
-      const fileName = `${item.category}_${item.id.slice(0, 8)}.${ext}`;
 
-      // 手机端：尝试使用 Web Share API
-      if (isMobile() && supportsShare()) {
-        try {
-          // 获取文件
-          const response = await fetch(url);
-          if (!response.ok) throw new Error('获取文件失败');
-          const blob = await response.blob();
-          const file = new File([blob], fileName, { type: blob.type });
-          
-          // 检查是否可以分享文件
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: fileName,
-            });
-            setDownloadingId(null);
-            return;
-          }
-        } catch (shareError) {
-          console.log('Share API 不可用，回退到其他方式');
-        }
+      // 手机端：直接提示长按保存
+      if (isMobile()) {
+        toast.info('长按图片选择保存到手机');
+        setDownloadingId(null);
+        return;
       }
 
       // 电脑端：使用 File System Access API
-      if (!isMobile() && supportsFileSystemAccess()) {
+      if (supportsFileSystemAccess()) {
         try {
+          const ext = item.media_type === 'image' ? 'png' : 'mp4';
+          const fileName = `${item.category}_${item.id.slice(0, 8)}.${ext}`;
+          
           const response = await fetch(url);
           if (!response.ok) throw new Error('获取文件失败');
           const blob = await response.blob();
@@ -293,29 +272,25 @@ export default function AdminPage() {
         }
       }
 
-      // 兜底方案：直接打开链接（手机端可长按保存）
-      if (isMobile()) {
-        // 手机端：新窗口打开图片，用户可长按保存
-        window.open(url, '_blank');
-        toast.info('图片已在新窗口打开，请长按图片保存到相册');
-      } else {
-        // 电脑端：传统下载方式
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('获取文件失败');
-        const blob = await response.blob();
-        
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = fileName;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-        toast.success('下载已开始');
-      }
+      // 电脑端兜底：传统下载方式
+      const ext = item.media_type === 'image' ? 'png' : 'mp4';
+      const fileName = `${item.category}_${item.id.slice(0, 8)}.${ext}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('获取文件失败');
+      const blob = await response.blob();
+      
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      toast.success('下载已开始');
     } catch (error) {
       console.error('下载失败:', error);
       toast.error('下载失败，请重试');
@@ -526,33 +501,10 @@ export default function AdminPage() {
                       </div>
                     )}
                     
-                    <div className={`absolute top-1 right-1 flex gap-1 ${isMobile() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openPreview(item);
-                        }}
-                        className="bg-white/90 text-gray-700 p-1.5 rounded-full shadow-lg hover:bg-white"
-                        title="预览"
-                      >
-                        <ZoomIn className="h-3.5 w-3.5" />
-                      </button>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDownload(item);
-                        }}
-                        disabled={downloadingId === item.id}
-                        className="bg-blue-500 text-white p-1.5 rounded-full shadow-lg hover:bg-blue-600 disabled:opacity-50"
-                        title={isMobile() ? "保存图片" : "下载"}
-                      >
-                        {downloadingId === item.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Download className="h-3.5 w-3.5" />
-                        )}
-                      </button>
+                    <div className={`absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-all ${isMobile() ? 'bg-black/10' : ''}`}>
+                      <div className={`bg-white/90 rounded-full p-2 shadow-lg ${isMobile() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                        <ZoomIn className="h-5 w-5 text-gray-700" />
+                      </div>
                     </div>
                     
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2 pointer-events-none">
@@ -597,61 +549,42 @@ export default function AdminPage() {
               />
             )}
             
-            <div className="mt-4 flex flex-col sm:flex-row items-center gap-4 text-white">
-              <span className="text-sm">{previewItem.category}</span>
-              <div className="flex gap-2">
-                {/* 手机端显示分享按钮 */}
-                {isMobile() && supportsShare() && (
-                  <Button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        await navigator.share({
-                          title: `${previewItem.category} - 麦塔记`,
-                          url: previewItem.media_url,
-                        });
-                      } catch (err) {
-                        console.log('分享取消');
-                      }
-                    }}
-                    variant="outline"
-                    className="text-white border-white hover:bg-white/20"
-                    size="sm"
-                  >
-                    <Share2 className="h-4 w-4 mr-2" />
-                    分享
-                  </Button>
+            <div className="mt-4 flex flex-col items-center gap-3 text-white">
+              <div className="flex items-center gap-4">
+                <span className="text-lg font-medium">{previewItem.category}</span>
+                {previewItem.media_type === 'video' && (
+                  <span className="text-sm text-gray-300">视频</span>
                 )}
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownload(previewItem);
-                  }}
-                  disabled={downloadingId === previewItem.id}
-                  className="bg-blue-500 hover:bg-blue-600"
-                  size="sm"
-                >
-                  {downloadingId === previewItem.id ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      处理中...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <Download className="h-4 w-4" />
-                      {isMobile() ? '保存图片' : '下载'}
-                    </span>
-                  )}
-                </Button>
               </div>
+              
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload(previewItem);
+                }}
+                disabled={downloadingId === previewItem.id}
+                className="bg-blue-500 hover:bg-blue-600 px-8"
+              >
+                {downloadingId === previewItem.id ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    处理中...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Download className="h-4 w-4" />
+                    保存图片
+                  </span>
+                )}
+              </Button>
+              
+              {/* 手机端提示 */}
+              {isMobile() && (
+                <p className="text-gray-300 text-sm text-center">
+                  点击按钮后，长按图片选择保存到手机
+                </p>
+              )}
             </div>
-            
-            {/* 手机端提示 */}
-            {isMobile() && (
-              <p className="text-gray-400 text-xs mt-2 text-center">
-                点击"保存图片"后，在新窗口中长按图片即可保存到相册
-              </p>
-            )}
           </div>
         </div>
       )}
