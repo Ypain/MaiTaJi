@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Trash2, Image, Video, Loader2, FolderOpen, Download } from 'lucide-react';
+import { Upload, Trash2, Image, Video, Loader2, FolderOpen, Download, X, ZoomIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { AGE_CATEGORIES, type AgeCategory, type MediaType } from '@/lib/constants';
 
@@ -37,6 +37,8 @@ export default function AdminPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  // 预览相关状态
+  const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 检测设备类型
@@ -45,7 +47,7 @@ export default function AdminPage() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   };
 
-  // 检测是否支持 File System Access API（主要用于电脑端）
+  // 检测是否支持 File System Access API
   const supportsFileSystemAccess = () => {
     if (typeof window === 'undefined') return false;
     return 'showSaveFilePicker' in window;
@@ -266,7 +268,7 @@ export default function AdminPage() {
 
       const blob = await response.blob();
 
-      // 电脑端：尝试使用 File System Access API（让用户选择保存位置）
+      // 电脑端：尝试使用 File System Access API
       if (!isMobile() && supportsFileSystemAccess()) {
         try {
           const handle = await (window as any).showSaveFilePicker({
@@ -287,7 +289,6 @@ export default function AdminPage() {
           setDownloadingId(null);
           return;
         } catch (err: any) {
-          // 用户取消或 API 不可用，回退到传统下载方式
           if (err.name === 'AbortError') {
             setDownloadingId(null);
             return;
@@ -295,18 +296,16 @@ export default function AdminPage() {
         }
       }
 
-      // 传统下载方式（适用于手机和不支持 File System Access API 的电脑）
+      // 传统下载方式
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = fileName;
       
-      // 对于移动端，尝试触发下载
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      // 延迟释放 URL
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       
       toast.success(
@@ -320,6 +319,16 @@ export default function AdminPage() {
     } finally {
       setDownloadingId(null);
     }
+  };
+
+  // 打开预览
+  const openPreview = (item: MediaItem) => {
+    setPreviewItem(item);
+  };
+
+  // 关闭预览
+  const closePreview = () => {
+    setPreviewItem(null);
   };
 
   // 权限检查中
@@ -503,7 +512,11 @@ export default function AdminPage() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {filteredItems.map((item) => (
-                  <div key={item.id} className="group relative aspect-square rounded-lg overflow-hidden border border-amber-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div 
+                    key={item.id} 
+                    className="group relative aspect-square rounded-lg overflow-hidden border border-amber-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => openPreview(item)}
+                  >
                     {item.media_type === 'image' ? (
                       <img
                         src={item.media_url}
@@ -520,21 +533,39 @@ export default function AdminPage() {
                       </div>
                     )}
                     
-                    {/* 保存按钮 */}
-                    <button
-                      onClick={() => handleDownload(item)}
-                      disabled={downloadingId === item.id}
-                      className="absolute top-1 right-1 bg-blue-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-blue-600 disabled:opacity-50"
-                      title="保存到本地"
-                    >
-                      {downloadingId === item.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Download className="h-3.5 w-3.5" />
-                      )}
-                    </button>
+                    {/* 操作按钮容器 - 手机端始终显示，电脑端hover显示 */}
+                    <div className={`absolute top-1 right-1 flex gap-1 ${isMobile() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                      {/* 预览按钮 */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openPreview(item);
+                        }}
+                        className="bg-white/90 text-gray-700 p-1.5 rounded-full shadow-lg hover:bg-white"
+                        title="放大预览"
+                      >
+                        <ZoomIn className="h-3.5 w-3.5" />
+                      </button>
+                      
+                      {/* 下载按钮 */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(item);
+                        }}
+                        disabled={downloadingId === item.id}
+                        className="bg-blue-500 text-white p-1.5 rounded-full shadow-lg hover:bg-blue-600 disabled:opacity-50"
+                        title="保存到本地"
+                      >
+                        {downloadingId === item.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
                     
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2 pointer-events-none">
                       <div className="font-medium">{item.category}</div>
                       <div className="text-gray-300 text-[10px]">{item.media_type === 'image' ? '图片' : '视频'}</div>
                     </div>
@@ -545,6 +576,67 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 图片/视频预览弹窗 */}
+      {previewItem && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={closePreview}
+        >
+          <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center">
+            {/* 关闭按钮 */}
+            <button
+              onClick={closePreview}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <X className="h-8 w-8" />
+            </button>
+            
+            {/* 预览内容 */}
+            {previewItem.media_type === 'image' ? (
+              <img
+                src={previewItem.media_url}
+                alt={previewItem.category}
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <video
+                src={previewItem.media_url}
+                controls
+                className="max-w-full max-h-[80vh] rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            
+            {/* 底部信息和操作 */}
+            <div className="mt-4 flex items-center gap-4 text-white">
+              <span className="text-sm">{previewItem.category}</span>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload(previewItem);
+                }}
+                disabled={downloadingId === previewItem.id}
+                className="bg-blue-500 hover:bg-blue-600"
+                size="sm"
+              >
+                {downloadingId === previewItem.id ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    下载中...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Download className="h-4 w-4" />
+                    保存到本地
+                  </span>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
