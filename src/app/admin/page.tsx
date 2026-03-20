@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Trash2, Image, Video, Loader2, FolderOpen, Download, X, ZoomIn } from 'lucide-react';
+import { Upload, Trash2, Image, Video, Loader2, FolderOpen, Download, X, ZoomIn, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AGE_CATEGORIES, type AgeCategory, type MediaType } from '@/lib/constants';
 
@@ -37,7 +37,6 @@ export default function AdminPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  // 预览相关状态
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,6 +44,12 @@ export default function AdminPage() {
   const isMobile = () => {
     if (typeof window === 'undefined') return false;
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  // 检测是否支持 Web Share API
+  const supportsShare = () => {
+    if (typeof window === 'undefined') return false;
+    return 'share' in navigator && 'canShare' in navigator;
   };
 
   // 检测是否支持 File System Access API
@@ -106,17 +111,14 @@ export default function AdminPage() {
     }
   }, [isAdmin]);
 
-  // 根据筛选条件过滤内容
   const filteredItems = filterCategory === '全部' 
     ? mediaItems 
     : mediaItems.filter(item => item.category === filterCategory);
 
-  // 统计每个类目的内容数量
   const getCategoryCount = (category: string) => {
     return mediaItems.filter(item => item.category === category).length;
   };
 
-  // 选择文件
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -147,14 +149,12 @@ export default function AdminPage() {
     }
   };
 
-  // 移除待上传文件
   const removePendingFile = (index: number) => {
     URL.revokeObjectURL(pendingPreviews[index]);
     setPendingFiles(prev => prev.filter((_, i) => i !== index));
     setPendingPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 提交上传
   const handleSubmit = async () => {
     if (pendingFiles.length === 0) {
       toast.error('请先选择要上传的文件');
@@ -229,29 +229,7 @@ export default function AdminPage() {
     }
   };
 
-  // 删除内容
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个内容吗？')) return;
-
-    try {
-      const response = await fetch(`/api/age-category-content?id=${id}`, {
-        method: 'DELETE',
-      });
-
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || '删除失败');
-      }
-
-      toast.success('删除成功');
-      fetchMediaItems();
-    } catch (error) {
-      console.error('删除失败:', error);
-      toast.error(error instanceof Error ? error.message : '删除失败');
-    }
-  };
-
-  // 下载文件
+  // 下载文件 - 优化手机端体验
   const handleDownload = async (item: MediaItem) => {
     setDownloadingId(item.id);
     
@@ -260,17 +238,36 @@ export default function AdminPage() {
       const ext = item.media_type === 'image' ? 'png' : 'mp4';
       const fileName = `${item.category}_${item.id.slice(0, 8)}.${ext}`;
 
-      // 使用 fetch 获取文件（处理跨域）
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('获取文件失败');
+      // 手机端：尝试使用 Web Share API
+      if (isMobile() && supportsShare()) {
+        try {
+          // 获取文件
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('获取文件失败');
+          const blob = await response.blob();
+          const file = new File([blob], fileName, { type: blob.type });
+          
+          // 检查是否可以分享文件
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: fileName,
+            });
+            setDownloadingId(null);
+            return;
+          }
+        } catch (shareError) {
+          console.log('Share API 不可用，回退到其他方式');
+        }
       }
 
-      const blob = await response.blob();
-
-      // 电脑端：尝试使用 File System Access API
+      // 电脑端：使用 File System Access API
       if (!isMobile() && supportsFileSystemAccess()) {
         try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('获取文件失败');
+          const blob = await response.blob();
+          
           const handle = await (window as any).showSaveFilePicker({
             suggestedName: fileName,
             types: [{
@@ -296,23 +293,29 @@ export default function AdminPage() {
         }
       }
 
-      // 传统下载方式
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = fileName;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-      
-      toast.success(
-        isMobile() 
-          ? '下载已开始，请在浏览器下载管理中查看' 
-          : '下载已开始'
-      );
+      // 兜底方案：直接打开链接（手机端可长按保存）
+      if (isMobile()) {
+        // 手机端：新窗口打开图片，用户可长按保存
+        window.open(url, '_blank');
+        toast.info('图片已在新窗口打开，请长按图片保存到相册');
+      } else {
+        // 电脑端：传统下载方式
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('获取文件失败');
+        const blob = await response.blob();
+        
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        toast.success('下载已开始');
+      }
     } catch (error) {
       console.error('下载失败:', error);
       toast.error('下载失败，请重试');
@@ -321,17 +324,14 @@ export default function AdminPage() {
     }
   };
 
-  // 打开预览
   const openPreview = (item: MediaItem) => {
     setPreviewItem(item);
   };
 
-  // 关闭预览
   const closePreview = () => {
     setPreviewItem(null);
   };
 
-  // 权限检查中
   if (checkingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -343,7 +343,6 @@ export default function AdminPage() {
     );
   }
 
-  // 非管理员
   if (!isAdmin) {
     return null;
   }
@@ -369,7 +368,6 @@ export default function AdminPage() {
             <CardTitle className="text-xl text-gray-800">内容上传</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* 类目选择 */}
             <div className="mb-6">
               <Label className="text-base font-medium mb-2 block">选择上传的年龄段类目</Label>
               <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as AgeCategory)}>
@@ -386,7 +384,6 @@ export default function AdminPage() {
               </Select>
             </div>
 
-            {/* 文件选择 */}
             <div className="mb-6">
               <input
                 ref={fileInputRef}
@@ -409,7 +406,6 @@ export default function AdminPage() {
               </Button>
             </div>
 
-            {/* 待上传文件预览 */}
             {pendingFiles.length > 0 && (
               <div className="mb-6">
                 <Label className="text-base font-medium mb-2 block">
@@ -444,7 +440,6 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* 提交按钮 */}
             <Button
               onClick={handleSubmit}
               disabled={uploading || pendingFiles.length === 0}
@@ -474,7 +469,6 @@ export default function AdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* 类目筛选 */}
             <div className="mb-6">
               <Label className="text-base font-medium mb-3 block">按类目筛选</Label>
               <div className="flex flex-wrap gap-2">
@@ -503,7 +497,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* 内容网格 */}
             {filteredItems.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <FolderOpen className="h-16 w-16 mx-auto mb-4 text-gray-300" />
@@ -533,21 +526,18 @@ export default function AdminPage() {
                       </div>
                     )}
                     
-                    {/* 操作按钮容器 - 手机端始终显示，电脑端hover显示 */}
                     <div className={`absolute top-1 right-1 flex gap-1 ${isMobile() ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                      {/* 预览按钮 */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           openPreview(item);
                         }}
                         className="bg-white/90 text-gray-700 p-1.5 rounded-full shadow-lg hover:bg-white"
-                        title="放大预览"
+                        title="预览"
                       >
                         <ZoomIn className="h-3.5 w-3.5" />
                       </button>
                       
-                      {/* 下载按钮 */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -555,7 +545,7 @@ export default function AdminPage() {
                         }}
                         disabled={downloadingId === item.id}
                         className="bg-blue-500 text-white p-1.5 rounded-full shadow-lg hover:bg-blue-600 disabled:opacity-50"
-                        title="保存到本地"
+                        title={isMobile() ? "保存图片" : "下载"}
                       >
                         {downloadingId === item.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -577,14 +567,13 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      {/* 图片/视频预览弹窗 */}
+      {/* 预览弹窗 */}
       {previewItem && (
         <div 
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
           onClick={closePreview}
         >
           <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center">
-            {/* 关闭按钮 */}
             <button
               onClick={closePreview}
               className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
@@ -592,48 +581,77 @@ export default function AdminPage() {
               <X className="h-8 w-8" />
             </button>
             
-            {/* 预览内容 */}
             {previewItem.media_type === 'image' ? (
               <img
                 src={previewItem.media_url}
                 alt={previewItem.category}
-                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                className="max-w-full max-h-[75vh] object-contain rounded-lg"
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
               <video
                 src={previewItem.media_url}
                 controls
-                className="max-w-full max-h-[80vh] rounded-lg"
+                className="max-w-full max-h-[75vh] rounded-lg"
                 onClick={(e) => e.stopPropagation()}
               />
             )}
             
-            {/* 底部信息和操作 */}
-            <div className="mt-4 flex items-center gap-4 text-white">
+            <div className="mt-4 flex flex-col sm:flex-row items-center gap-4 text-white">
               <span className="text-sm">{previewItem.category}</span>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload(previewItem);
-                }}
-                disabled={downloadingId === previewItem.id}
-                className="bg-blue-500 hover:bg-blue-600"
-                size="sm"
-              >
-                {downloadingId === previewItem.id ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    下载中...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Download className="h-4 w-4" />
-                    保存到本地
-                  </span>
+              <div className="flex gap-2">
+                {/* 手机端显示分享按钮 */}
+                {isMobile() && supportsShare() && (
+                  <Button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      try {
+                        await navigator.share({
+                          title: `${previewItem.category} - 麦塔记`,
+                          url: previewItem.media_url,
+                        });
+                      } catch (err) {
+                        console.log('分享取消');
+                      }
+                    }}
+                    variant="outline"
+                    className="text-white border-white hover:bg-white/20"
+                    size="sm"
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    分享
+                  </Button>
                 )}
-              </Button>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(previewItem);
+                  }}
+                  disabled={downloadingId === previewItem.id}
+                  className="bg-blue-500 hover:bg-blue-600"
+                  size="sm"
+                >
+                  {downloadingId === previewItem.id ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      处理中...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      {isMobile() ? '保存图片' : '下载'}
+                    </span>
+                  )}
+                </Button>
+              </div>
             </div>
+            
+            {/* 手机端提示 */}
+            {isMobile() && (
+              <p className="text-gray-400 text-xs mt-2 text-center">
+                点击"保存图片"后，在新窗口中长按图片即可保存到相册
+              </p>
+            )}
           </div>
         </div>
       )}
