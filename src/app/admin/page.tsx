@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Trash2, Image, Video, Loader2, FolderOpen } from 'lucide-react';
+import { Upload, Trash2, Image, Video, Loader2, FolderOpen, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { AGE_CATEGORIES, type AgeCategory, type MediaType } from '@/lib/constants';
 
@@ -27,18 +27,29 @@ interface MediaItem {
 
 export default function AdminPage() {
   const router = useRouter();
-  // 上传用类目
   const [selectedCategory, setSelectedCategory] = useState<AgeCategory>('出生');
-  // 筛选用类目（全部或特定类目）
   const [filterCategory, setFilterCategory] = useState<string>('全部');
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingPreviews, setPendingPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 检测设备类型
+  const isMobile = () => {
+    if (typeof window === 'undefined') return false;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  // 检测是否支持 File System Access API（主要用于电脑端）
+  const supportsFileSystemAccess = () => {
+    if (typeof window === 'undefined') return false;
+    return 'showSaveFilePicker' in window;
+  };
 
   // 检查管理员权限
   useEffect(() => {
@@ -73,7 +84,6 @@ export default function AdminPage() {
     try {
       const response = await fetch('/api/age-category-content');
       const result = await response.json();
-      console.log('获取内容结果:', result);
       if (result.success) {
         setMediaItems(result.data || []);
       } else {
@@ -109,7 +119,6 @@ export default function AdminPage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // 验证文件类型
     const validFiles = files.filter(file => {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
@@ -126,7 +135,6 @@ export default function AdminPage() {
 
     if (validFiles.length === 0) return;
 
-    // 生成预览
     const previews = validFiles.map(file => URL.createObjectURL(file));
     
     setPendingFiles(prev => [...prev, ...validFiles]);
@@ -161,12 +169,9 @@ export default function AdminPage() {
         const mediaType: MediaType = file.type.startsWith('image/') ? 'image' : 'video';
 
         try {
-          // 上传文件到存储
           const formData = new FormData();
           formData.append('file', file);
           formData.append('folder', `age-category/${selectedCategory}`);
-
-          console.log('上传文件:', file.name, '到类目:', selectedCategory);
           
           const uploadResponse = await fetch('/api/upload', {
             method: 'POST',
@@ -174,28 +179,22 @@ export default function AdminPage() {
           });
 
           const uploadResult = await uploadResponse.json();
-          console.log('上传结果:', uploadResult);
           
           if (!uploadResult.success) {
             throw new Error(uploadResult.error || '上传失败');
           }
 
-          // 保存到数据库
-          const saveData = {
-            category: selectedCategory,
-            mediaUrl: uploadResult.data.url,
-            mediaType: mediaType,
-          };
-          console.log('保存到数据库:', saveData);
-          
           const saveResponse = await fetch('/api/age-category-content', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(saveData),
+            body: JSON.stringify({
+              category: selectedCategory,
+              mediaUrl: uploadResult.data.url,
+              mediaType: mediaType,
+            }),
           });
 
           const saveResult = await saveResponse.json();
-          console.log('保存结果:', saveResult);
           
           if (!saveResult.success) {
             throw new Error(saveResult.error || '保存失败');
@@ -215,12 +214,10 @@ export default function AdminPage() {
         toast.error(`${failCount} 个文件上传失败`);
       }
 
-      // 清空待上传列表
       pendingPreviews.forEach(url => URL.revokeObjectURL(url));
       setPendingFiles([]);
       setPendingPreviews([]);
       
-      // 刷新列表
       fetchMediaItems();
     } catch (error) {
       console.error('上传失败:', error);
@@ -249,6 +246,79 @@ export default function AdminPage() {
     } catch (error) {
       console.error('删除失败:', error);
       toast.error(error instanceof Error ? error.message : '删除失败');
+    }
+  };
+
+  // 下载文件
+  const handleDownload = async (item: MediaItem) => {
+    setDownloadingId(item.id);
+    
+    try {
+      const url = item.media_url;
+      const ext = item.media_type === 'image' ? 'png' : 'mp4';
+      const fileName = `${item.category}_${item.id.slice(0, 8)}.${ext}`;
+
+      // 使用 fetch 获取文件（处理跨域）
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('获取文件失败');
+      }
+
+      const blob = await response.blob();
+
+      // 电脑端：尝试使用 File System Access API（让用户选择保存位置）
+      if (!isMobile() && supportsFileSystemAccess()) {
+        try {
+          const handle = await (window as any).showSaveFilePicker({
+            suggestedName: fileName,
+            types: [{
+              description: item.media_type === 'image' ? '图片' : '视频',
+              accept: item.media_type === 'image' 
+                ? { 'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'] }
+                : { 'video/*': ['.mp4', '.webm'] }
+            }]
+          });
+          
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          
+          toast.success('文件已保存');
+          setDownloadingId(null);
+          return;
+        } catch (err: any) {
+          // 用户取消或 API 不可用，回退到传统下载方式
+          if (err.name === 'AbortError') {
+            setDownloadingId(null);
+            return;
+          }
+        }
+      }
+
+      // 传统下载方式（适用于手机和不支持 File System Access API 的电脑）
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      
+      // 对于移动端，尝试触发下载
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // 延迟释放 URL
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      
+      toast.success(
+        isMobile() 
+          ? '下载已开始，请在浏览器下载管理中查看' 
+          : '下载已开始'
+      );
+    } catch (error) {
+      console.error('下载失败:', error);
+      toast.error('下载失败，请重试');
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -449,12 +519,21 @@ export default function AdminPage() {
                         <Video className="h-12 w-12 text-gray-400" />
                       </div>
                     )}
+                    
+                    {/* 保存按钮 */}
                     <button
-                      onClick={() => handleDelete(item.id)}
-                      className="absolute top-1 right-1 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                      onClick={() => handleDownload(item)}
+                      disabled={downloadingId === item.id}
+                      className="absolute top-1 right-1 bg-blue-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-blue-600 disabled:opacity-50"
+                      title="保存到本地"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {downloadingId === item.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Download className="h-3.5 w-3.5" />
+                      )}
                     </button>
+                    
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-2">
                       <div className="font-medium">{item.category}</div>
                       <div className="text-gray-300 text-[10px]">{item.media_type === 'image' ? '图片' : '视频'}</div>
