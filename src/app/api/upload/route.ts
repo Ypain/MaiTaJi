@@ -27,15 +27,18 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
-    // 生成文件名
+    // 生成文件名（只使用英文、数字、下划线和连字符）
     const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const fileName = `${folder}/${timestamp}_${safeName}`;
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    // 将中文文件夹名转为拼音或用英文替代
+    const safeFolder = folder
+      .replace(/[\u4e00-\u9fa5]/g, '_') // 中文替换为下划线
+      .replace(/[^a-zA-Z0-9\/_-]/g, '_'); // 其他非安全字符替换
+    const fileName = `${safeFolder}/${timestamp}_${randomStr}.${ext}`;
     
     // 使用 Supabase Storage 上传
     const supabase = getSupabaseClient();
-    
-    // 先确保 bucket 存在（使用默认的 bucket）
     const bucketName = 'images';
     
     // 上传文件到 Supabase Storage
@@ -49,17 +52,12 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Supabase Storage 上传错误:', error);
       
-      // 如果 bucket 不存在，尝试创建
-      if (error.message.includes('not found') || error.message.includes('does not exist')) {
+      // 如果 bucket 不存在，提示创建
+      if (error.message.includes('not found') || error.message.includes('does not exist') || error.message.includes('Bucket not found')) {
         return NextResponse.json({
           success: false,
           error: '存储桶不存在',
-          details: '请在 Supabase 控制台创建名为 "images" 的存储桶：\n' +
-            '1. 进入 Supabase Dashboard → Storage\n' +
-            '2. 点击 "Create a new bucket"\n' +
-            '3. 名称输入 "images"\n' +
-            '4. 勾选 "Public bucket"\n' +
-            '5. 点击创建'
+          details: '请在 Supabase 控制台创建名为 "images" 的存储桶'
         }, { status: 500 });
       }
       
