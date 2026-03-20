@@ -235,33 +235,45 @@ export default function HomePage() {
 
           {/* 展示列表 - 一行最多6个 */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-4">
-            {showcases.map((showcase) => (
-              <div
-                key={showcase.id}
-                className="aspect-square relative rounded-lg overflow-hidden cursor-pointer group"
-                onClick={() => setPreviewImage(showcase.media_url)}
-              >
-                {showcase.media_type === 'video' ? (
-                  <video
-                    src={showcase.media_url}
-                    className="w-full h-full object-cover"
-                    muted
-                    playsInline
-                  />
-                ) : (
-                  <img
-                    src={showcase.media_url}
-                    alt={showcase.title || '用户展示'}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                )}
-                {showcase.media_type === 'video' && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <Play className="h-8 w-8 text-white" />
-                  </div>
-                )}
+            {showcases
+              .filter((showcase) => showcase.media_url && showcase.media_url.trim() !== '')
+              .map((showcase) => (
+                <div
+                  key={showcase.id}
+                  className="aspect-square relative rounded-lg overflow-hidden cursor-pointer group bg-gray-100"
+                  onClick={() => setPreviewImage(showcase.media_url)}
+                >
+                  {showcase.media_type === 'video' ? (
+                    <video
+                      src={showcase.media_url}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <img
+                      src={showcase.media_url}
+                      alt={showcase.title || '用户展示'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        target.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400"><svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                      }}
+                    />
+                  )}
+                  {showcase.media_type === 'video' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <Play className="h-8 w-8 text-white" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            {showcases.filter((s) => s.media_url && s.media_url.trim() !== '').length === 0 && (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                暂无用户展示，快来上传第一个吧！
               </div>
-            ))}
+            )}
           </div>
 
           {/* 底部长驻上传入口 */}
