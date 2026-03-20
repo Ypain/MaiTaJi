@@ -3,10 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -14,52 +11,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Upload, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Upload, Trash2, Image, Video, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { AGE_CATEGORIES, type AgeCategory, type MediaType } from '@/lib/constants';
 
-// 分类配置
-const CATEGORIES = {
-  clothing: {
-    name: '服装区',
-    subcategories: {
-      tops: '上衣',
-      pants: '裤子',
-      shoes: '鞋子',
-      hats: '帽子',
-    },
-  },
-  beauty: {
-    name: '美妆区',
-    subcategories: {},
-  },
-  jewelry: {
-    name: '首饰区',
-    subcategories: {
-      bracelets: '手镯',
-      necklaces: '项链',
-      earrings: '耳环',
-      rings: '戒指',
-      chains: '手链',
-    },
-  },
-};
-
-interface Product {
+interface MediaItem {
   id: string;
-  name: string;
   category: string;
-  subcategory: string | null;
-  image_url: string;
+  media_url: string;
+  media_type: string;
+  description: string | null;
   created_at: string;
 }
 
 export default function AdminPage() {
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [category, setCategory] = useState('clothing');
-  const [subcategory, setSubcategory] = useState('');
-  const [productName, setProductName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<AgeCategory>('出生');
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pendingPreviews, setPendingPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -91,99 +64,152 @@ export default function AdminPage() {
     checkAuth();
   }, [router]);
 
-  // 获取商品列表
-  const fetchProducts = async () => {
+  // 获取内容列表
+  const fetchMediaItems = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/products');
+      const response = await fetch('/api/age-category-content');
       const result = await response.json();
       if (result.success) {
-        setProducts(result.data);
+        setMediaItems(result.data);
       }
     } catch (error) {
-      console.error('获取商品失败:', error);
-      toast.error('获取商品失败');
+      console.error('获取内容失败:', error);
+      toast.error('获取内容失败');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (isAdmin) {
-      fetchProducts();
+      fetchMediaItems();
     }
   }, [isAdmin]);
 
-  // 上传图片
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // 选择文件
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    if (!productName) {
-      toast.error('请输入商品名称');
-      return;
+    // 验证文件类型
+    const validFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      if (!isImage && !isVideo) {
+        toast.error(`文件 ${file.name} 不是图片或视频格式`);
+        return false;
+      }
+      if (file.size > 100 * 1024 * 1024) {
+        toast.error(`文件 ${file.name} 超过100MB限制`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    // 生成预览
+    const previews = validFiles.map(file => URL.createObjectURL(file));
+    
+    setPendingFiles(prev => [...prev, ...validFiles]);
+    setPendingPreviews(prev => [...prev, ...previews]);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
+  };
 
-    if (!category) {
-      toast.error('请选择分类');
-      return;
-    }
+  // 移除待上传文件
+  const removePendingFile = (index: number) => {
+    URL.revokeObjectURL(pendingPreviews[index]);
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+    setPendingPreviews(prev => prev.filter((_, i) => i !== index));
+  };
 
-    if (category !== 'beauty' && !subcategory) {
-      toast.error('请选择二级分类');
+  // 提交上传
+  const handleSubmit = async () => {
+    if (pendingFiles.length === 0) {
+      toast.error('请先选择要上传的文件');
       return;
     }
 
     setUploading(true);
+    let successCount = 0;
+    let failCount = 0;
+
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('folder', 'products');
+      for (let i = 0; i < pendingFiles.length; i++) {
+        const file = pendingFiles[i];
+        const mediaType: MediaType = file.type.startsWith('image/') ? 'image' : 'video';
 
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+        try {
+          // 上传文件到存储
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('folder', `age-category/${selectedCategory}`);
 
-      const uploadResult = await uploadResponse.json();
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.error || '上传失败');
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const uploadResult = await uploadResponse.json();
+          if (!uploadResult.success) {
+            throw new Error(uploadResult.error || '上传失败');
+          }
+
+          // 保存到数据库
+          const saveResponse = await fetch('/api/age-category-content', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              category: selectedCategory,
+              mediaUrl: uploadResult.data.url,
+              mediaType: mediaType,
+            }),
+          });
+
+          const saveResult = await saveResponse.json();
+          if (!saveResult.success) {
+            throw new Error(saveResult.error || '保存失败');
+          }
+
+          successCount++;
+        } catch (error) {
+          console.error(`文件 ${file.name} 上传失败:`, error);
+          failCount++;
+        }
       }
 
-      const productResponse = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: productName,
-          category: category,
-          subcategory: category === 'beauty' ? null : subcategory,
-          imageUrl: uploadResult.data.url,
-        }),
-      });
-
-      const productResult = await productResponse.json();
-      if (!productResult.success) {
-        throw new Error(productResult.error || '创建商品失败');
+      if (successCount > 0) {
+        toast.success(`成功上传 ${successCount} 个文件`);
+      }
+      if (failCount > 0) {
+        toast.error(`${failCount} 个文件上传失败`);
       }
 
-      toast.success('商品添加成功');
-      setProductName('');
-      setSubcategory('');
-      fetchProducts();
+      // 清空待上传列表
+      pendingPreviews.forEach(url => URL.revokeObjectURL(url));
+      setPendingFiles([]);
+      setPendingPreviews([]);
+      
+      // 刷新列表
+      fetchMediaItems();
     } catch (error) {
       console.error('上传失败:', error);
-      toast.error(error instanceof Error ? error.message : '上传失败');
+      toast.error('上传过程出错');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 
-  // 删除商品
+  // 删除内容
   const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个商品吗？')) return;
+    if (!confirm('确定要删除这个内容吗？')) return;
 
     try {
-      const response = await fetch(`/api/products?id=${id}`, {
+      const response = await fetch(`/api/age-category-content?id=${id}`, {
         method: 'DELETE',
       });
 
@@ -193,30 +219,10 @@ export default function AdminPage() {
       }
 
       toast.success('删除成功');
-      fetchProducts();
+      fetchMediaItems();
     } catch (error) {
       console.error('删除失败:', error);
       toast.error(error instanceof Error ? error.message : '删除失败');
-    }
-  };
-
-  // 初始化数据
-  const handleInitData = async () => {
-    try {
-      const response = await fetch('/api/init-data?force=true', {
-        method: 'POST',
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        toast.success(`数据初始化成功！添加了 ${result.productsCount} 个商品和 ${result.showcasesCount} 个用户展示`);
-        fetchProducts();
-      } else {
-        toast.info(result.message || '数据已存在');
-      }
-    } catch (error) {
-      console.error('初始化数据失败:', error);
-      toast.error('初始化数据失败');
     }
   };
 
@@ -242,162 +248,162 @@ export default function AdminPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-amber-700">
-            麦塔记 - 后台管理
+            麦塔记 - 管理员后台
           </h1>
-          <div className="flex gap-3">
-            <Button
-              onClick={handleInitData}
-              variant="outline"
-              className="border-amber-200 hover:bg-amber-50"
-            >
-              初始化示例数据
-            </Button>
-            <Button
-              asChild
-              className="bg-amber-600 hover:bg-amber-700"
-            >
-              <a href="/">返回首页</a>
-            </Button>
-          </div>
+          <Button
+            asChild
+            className="bg-amber-600 hover:bg-amber-700"
+          >
+            <a href="/">返回首页</a>
+          </Button>
         </div>
 
         {/* 上传区域 */}
         <Card className="mb-8 border-amber-200 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl text-gray-800">添加商品</CardTitle>
+            <CardTitle className="text-xl text-gray-800">内容上传</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div>
-                <Label htmlFor="category">一级分类</Label>
-                <Select value={category} onValueChange={(v) => {
-                  setCategory(v);
-                  setSubcategory('');
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择分类" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(CATEGORIES).map(([key, val]) => (
-                      <SelectItem key={key} value={key}>{val.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {category !== 'beauty' && (
-                <div>
-                  <Label htmlFor="subcategory">二级分类</Label>
-                  <Select value={subcategory} onValueChange={setSubcategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择二级分类" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(CATEGORIES[category as keyof typeof CATEGORIES].subcategories).map(([key, val]) => (
-                        <SelectItem key={key} value={key}>{val}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className={category === 'beauty' ? 'md:col-span-2' : ''}>
-                <Label htmlFor="name">商品名称</Label>
-                <Input
-                  id="name"
-                  value={productName}
-                  onChange={(e) => setProductName(e.target.value)}
-                  placeholder="输入商品名称"
-                />
-              </div>
-
-              <div className="flex items-end">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  className="hidden"
-                  onChange={handleUpload}
-                />
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="w-full bg-amber-600 hover:bg-amber-700"
-                >
-                  {uploading ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      上传中...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <Upload className="h-4 w-4" />
-                      上传图片
-                    </span>
-                  )}
-                </Button>
-              </div>
+            {/* 类目选择 */}
+            <div className="mb-6">
+              <Label className="text-base font-medium mb-2 block">选择年龄段类目</Label>
+              <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as AgeCategory)}>
+                <SelectTrigger className="w-full md:w-[280px]">
+                  <SelectValue placeholder="选择类目" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AGE_CATEGORIES.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* 文件选择 */}
+            <div className="mb-6">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="border-dashed border-2 border-amber-300 hover:border-amber-500 h-32 w-full md:w-auto md:px-12"
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="h-8 w-8 text-amber-500" />
+                  <span className="text-amber-600 font-medium">选择图片或视频</span>
+                  <span className="text-xs text-gray-500">支持多选，单个文件最大100MB</span>
+                </div>
+              </Button>
+            </div>
+
+            {/* 待上传文件预览 */}
+            {pendingFiles.length > 0 && (
+              <div className="mb-6">
+                <Label className="text-base font-medium mb-2 block">
+                  待上传文件 ({pendingFiles.length} 个)
+                </Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {pendingFiles.map((file, index) => (
+                    <div key={index} className="group relative aspect-square rounded-lg overflow-hidden border border-amber-200 bg-white">
+                      {file.type.startsWith('image/') ? (
+                        <img
+                          src={pendingPreviews[index]}
+                          alt={file.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                          <Video className="h-12 w-12 text-gray-400" />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => removePendingFile(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                        {file.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 提交按钮 */}
+            <Button
+              onClick={handleSubmit}
+              disabled={uploading || pendingFiles.length === 0}
+              className="w-full md:w-auto bg-amber-600 hover:bg-amber-700 disabled:bg-gray-300"
+            >
+              {uploading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  上传中...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  提交上传 ({pendingFiles.length} 个文件)
+                </span>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
-        {/* 商品列表 */}
-        <Tabs defaultValue="clothing" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white border border-amber-200">
-            <TabsTrigger value="clothing" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
-              服装区
-            </TabsTrigger>
-            <TabsTrigger value="beauty" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
-              美妆区
-            </TabsTrigger>
-            <TabsTrigger value="jewelry" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
-              首饰区
-            </TabsTrigger>
-          </TabsList>
-
-          {Object.keys(CATEGORIES).map((cat) => (
-            <TabsContent key={cat} value={cat} className="mt-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {products
-                  .filter((p) => p.category === cat)
-                  .map((product) => (
-                    <Card key={product.id} className="group relative overflow-hidden border-amber-100">
-                      <div className="aspect-square relative">
-                        <img
-                          src={product.image_url}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <CardContent className="p-3">
-                        <p className="text-sm font-medium text-gray-800 truncate">{product.name}</p>
-                        {product.subcategory && (
-                          <p className="text-xs text-gray-500">
-                            {(() => {
-                              const subs = CATEGORIES[cat as keyof typeof CATEGORIES].subcategories;
-                              if (typeof subs === 'object' && subs !== null && product.subcategory in subs) {
-                                return (subs as Record<string, string>)[product.subcategory];
-                              }
-                              return product.subcategory;
-                            })()}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+        {/* 内容列表 */}
+        <Card className="border-amber-200 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl text-gray-800">
+              已上传内容
+              {loading && <Loader2 className="inline-block ml-2 h-4 w-4 animate-spin" />}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {mediaItems.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Image className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p>暂无上传内容</p>
               </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {mediaItems.map((item) => (
+                  <div key={item.id} className="group relative aspect-square rounded-lg overflow-hidden border border-amber-200 bg-white">
+                    {item.media_type === 'image' ? (
+                      <img
+                        src={item.media_url}
+                        alt={item.category}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                        <Video className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="absolute top-1 right-1 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1.5">
+                      {item.category}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

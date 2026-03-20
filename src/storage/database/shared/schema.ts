@@ -74,3 +74,15 @@ export const showcases = pgTable("showcases", {
 	description: text(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 });
+
+// 年龄段内容表（管理员上传）
+export const ageCategoryContent = pgTable("age_category_content", {
+	id: varchar({ length: 36 }).default(gen_random_uuid()).primaryKey().notNull(),
+	category: varchar({ length: 50 }).notNull(), // 年龄段类目：出生、一个月、两个月...18岁
+	mediaUrl: text("media_url").notNull(), // 图片或视频URL
+	mediaType: varchar("media_type", { length: 20 }).notNull(), // image 或 video
+	description: text(), // 可选描述
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("age_category_content_idx").using("btree", table.category.asc().nullsLast().op("text_ops")),
+]);
