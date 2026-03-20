@@ -1,35 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Storage } from 'coze-coding-dev-sdk';
-
-// 延迟初始化存储客户端
-let storage: S3Storage | null = null;
-
-function getStorage(): S3Storage {
-  if (!storage) {
-    const endpointUrl = process.env.COZE_BUCKET_ENDPOINT_URL;
-    const bucketName = process.env.COZE_BUCKET_NAME;
-    
-    console.log('对象存储配置检查:', { 
-      endpointUrl: endpointUrl ? '已配置' : '未配置', 
-      bucketName: bucketName ? '已配置' : '未配置' 
-    });
-    
-    if (!endpointUrl || !bucketName) {
-      throw new Error('对象存储未配置。请在服务器 .env.local 中添加：\n' +
-        'COZE_BUCKET_ENDPOINT_URL=https://integration.coze.cn/coze-coding-s3proxy/v1\n' +
-        'COZE_BUCKET_NAME=bucket_1773652903873');
-    }
-    
-    storage = new S3Storage({
-      endpointUrl: endpointUrl,
-      accessKey: "",
-      secretKey: "",
-      bucketName: bucketName,
-      region: "cn-beijing",
-    });
-  }
-  return storage;
-}
+import { getSupabaseClient } from '@/storage/database/supabase-client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,19 +32,48 @@ export async function POST(request: NextRequest) {
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const fileName = `${folder}/${timestamp}_${safeName}`;
     
-    // 上传到对象存储
-    const storageClient = getStorage();
-    const key = await storageClient.uploadFile({
-      fileContent: buffer,
-      fileName: fileName,
-      contentType: file.type,
-    });
+    // 使用 Supabase Storage 上传
+    const supabase = getSupabaseClient();
     
-    // 生成访问URL（有效期30天）
-    const url = await storageClient.generatePresignedUrl({
-      key: key,
-      expireTime: 2592000, // 30天
-    });
+    // 先确保 bucket 存在（使用默认的 bucket）
+    const bucketName = 'images';
+    
+    // 上传文件到 Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+    
+    if (error) {
+      console.error('Supabase Storage 上传错误:', error);
+      
+      // 如果 bucket 不存在，尝试创建
+      if (error.message.includes('not found') || error.message.includes('does not exist')) {
+        return NextResponse.json({
+          success: false,
+          error: '存储桶不存在',
+          details: '请在 Supabase 控制台创建名为 "images" 的存储桶：\n' +
+            '1. 进入 Supabase Dashboard → Storage\n' +
+            '2. 点击 "Create a new bucket"\n' +
+            '3. 名称输入 "images"\n' +
+            '4. 勾选 "Public bucket"\n' +
+            '5. 点击创建'
+        }, { status: 500 });
+      }
+      
+      return NextResponse.json({
+        success: false,
+        error: '上传失败',
+        details: error.message
+      }, { status: 500 });
+    }
+    
+    // 获取公开访问 URL
+    const { data: urlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(data.path);
     
     // 判断媒体类型
     const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
@@ -82,8 +81,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        key: key,
-        url: url,
+        key: data.path,
+        url: urlData.publicUrl,
         mediaType: mediaType,
         fileName: file.name,
         fileSize: file.size,
@@ -91,24 +90,8 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('上传失败:', error);
-    
-    const errorMessage = error instanceof Error ? error.message : '未知错误';
-    
-    // 如果是缺少环境变量，返回配置说明
-    if (errorMessage.includes('未配置') || errorMessage.includes('missing')) {
-      return NextResponse.json({
-        success: false,
-        error: '对象存储配置缺失',
-        details: errorMessage,
-        config: {
-          COZE_BUCKET_ENDPOINT_URL: 'https://integration.coze.cn/coze-coding-s3proxy/v1',
-          COZE_BUCKET_NAME: 'bucket_1773652903873'
-        }
-      }, { status: 500 });
-    }
-    
     return NextResponse.json(
-      { success: false, error: '上传失败', details: errorMessage },
+      { success: false, error: '上传失败', details: error instanceof Error ? error.message : '未知错误' },
       { status: 500 }
     );
   }
