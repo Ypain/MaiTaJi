@@ -9,11 +9,15 @@ function getStorage(): S3Storage {
     const endpointUrl = process.env.COZE_BUCKET_ENDPOINT_URL;
     const bucketName = process.env.COZE_BUCKET_NAME;
     
+    console.log('对象存储配置检查:', { 
+      endpointUrl: endpointUrl ? '已配置' : '未配置', 
+      bucketName: bucketName ? '已配置' : '未配置' 
+    });
+    
     if (!endpointUrl || !bucketName) {
-      throw new Error('对象存储未配置。请在服务器上设置环境变量：\n' +
-        '- COZE_BUCKET_ENDPOINT_URL\n' +
-        '- COZE_BUCKET_NAME\n\n' +
-        '或使用 Supabase Storage 替代方案。');
+      throw new Error('对象存储未配置。请在服务器 .env.local 中添加：\n' +
+        'COZE_BUCKET_ENDPOINT_URL=https://integration.coze.cn/coze-coding-s3proxy/v1\n' +
+        'COZE_BUCKET_NAME=bucket_1773652903873');
     }
     
     storage = new S3Storage({
@@ -31,7 +35,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const folder = formData.get('folder') as string || 'products';
+    const folder = formData.get('folder') as string || 'uploads';
     
     if (!file) {
       return NextResponse.json({ success: false, error: '未找到文件' }, { status: 400 });
@@ -66,10 +70,10 @@ export async function POST(request: NextRequest) {
       contentType: file.type,
     });
     
-    // 生成访问URL（有效期7天）
+    // 生成访问URL（有效期30天）
     const url = await storageClient.generatePresignedUrl({
       key: key,
-      expireTime: 604800, // 7天
+      expireTime: 2592000, // 30天
     });
     
     // 判断媒体类型
@@ -87,12 +91,24 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('上传失败:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+    
+    // 如果是缺少环境变量，返回配置说明
+    if (errorMessage.includes('未配置') || errorMessage.includes('missing')) {
+      return NextResponse.json({
+        success: false,
+        error: '对象存储配置缺失',
+        details: errorMessage,
+        config: {
+          COZE_BUCKET_ENDPOINT_URL: 'https://integration.coze.cn/coze-coding-s3proxy/v1',
+          COZE_BUCKET_NAME: 'bucket_1773652903873'
+        }
+      }, { status: 500 });
+    }
+    
     return NextResponse.json(
-      { 
-        success: false, 
-        error: '上传失败', 
-        details: error instanceof Error ? error.message : '未知错误' 
-      },
+      { success: false, error: '上传失败', details: errorMessage },
       { status: 500 }
     );
   }
