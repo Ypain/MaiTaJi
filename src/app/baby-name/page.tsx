@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Baby, Sparkles, Loader2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Baby, Sparkles, Loader2, Copy, Check, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ShareButton } from '@/components/ShareButton';
 
 export default function BabyNamePage() {
   const [surname, setSurname] = useState('');
@@ -219,19 +220,25 @@ export default function BabyNamePage() {
                 起名结果
               </CardTitle>
               {result && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopy}
-                  className="text-gray-500 hover:text-pink-500 h-8 px-2"
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                  <span className="ml-1 text-xs">复制</span>
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="text-gray-500 hover:text-pink-500 h-8 px-2"
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    <span className="ml-1 text-xs">复制</span>
+                  </Button>
+                  <ShareButton
+                    title="AI起名结果"
+                    description={`我用麦塔记AI为宝宝起了个名字，快来看看吧！\n\n${result}`}
+                  />
+                </div>
               )}
             </CardHeader>
             <CardContent className="pt-0">
