@@ -111,27 +111,65 @@ export default function HomePage() {
   const [copied, setCopied] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
   const shareTitle = '麦塔记 - AI智能起名与母婴育儿服务平台';
   const shareText = '免费AI智能起名、育儿问答、辅食推荐等服务，陪伴宝宝健康成长';
 
-  // 复制链接
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      toast.success('链接已复制，快去分享给朋友吧！');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('复制失败，请手动复制链接');
+  // 获取当前URL
+  const getShareUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.href;
     }
+    return 'https://www.maitaji.com';
+  };
+
+  // 复制链接 - 兼容多种环境
+  const handleCopyLink = async () => {
+    const url = getShareUrl();
+    
+    // 方法1: 使用 Clipboard API（现代浏览器）
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        toast.success('链接已复制，快去分享给朋友吧！');
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      } catch {
+        // 继续尝试备用方法
+      }
+    }
+    
+    // 方法2: 使用 execCommand（兼容旧浏览器）
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const success = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (success) {
+        setCopied(true);
+        toast.success('链接已复制，快去分享给朋友吧！');
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+    } catch {
+      // 忽略错误
+    }
+    
+    // 方法3: 都失败了，提示用户手动复制
+    toast.error('复制失败，请手动复制链接');
   };
 
   // 微信分享 - 尝试唤起微信App
   const handleWechatShare = async () => {
     // 先复制链接
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
+    await handleCopyLink();
     
     // 尝试唤起微信（仅移动端有效）
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -145,24 +183,19 @@ export default function HomePage() {
       
       setTimeout(() => {
         document.body.removeChild(iframe);
-        toast.success('链接已复制，正在打开微信...');
       }, 500);
       
       // 如果3秒后还在当前页面，说明唤起失败
       setTimeout(() => {
         toast.info('如果微信未打开，请手动打开微信分享');
       }, 3000);
-    } else {
-      toast.success('链接已复制，请打开微信分享给好友');
     }
     setShowShareDialog(false);
   };
 
   // 小红书分享
   const handleXiaohongshuShare = async () => {
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    toast.success('链接已复制，请打开小红书发布笔记');
+    await handleCopyLink();
     setShowShareDialog(false);
   };
 
@@ -172,17 +205,17 @@ export default function HomePage() {
     
     if (isMobile) {
       // 移动端尝试唤起微博App
-      const weiboScheme = `sinaweibo://share?type=text&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`;
+      const weiboScheme = `sinaweibo://share?type=text&url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}`;
       window.location.href = weiboScheme;
       
       // 备用：如果唤起失败，使用网页版
       setTimeout(() => {
-        const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`;
+        const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}`;
         window.open(weiboUrl, '_blank');
       }, 2000);
     } else {
       // PC端直接打开网页版
-      const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`;
+      const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}`;
       window.open(weiboUrl, '_blank', 'width=600,height=400');
     }
     setShowShareDialog(false);
@@ -194,11 +227,11 @@ export default function HomePage() {
     
     if (isMobile) {
       // 移动端尝试唤起QQ
-      const qqScheme = `mqqapi://share/to_fri?file_type=news&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}&description=${encodeURIComponent(shareText)}`;
+      const qqScheme = `mqqapi://share/to_fri?file_type=news&url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}&description=${encodeURIComponent(shareText)}`;
       window.location.href = qqScheme;
     } else {
       // PC端使用网页版
-      const qqUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}&desc=${encodeURIComponent(shareText)}`;
+      const qqUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}&desc=${encodeURIComponent(shareText)}`;
       window.open(qqUrl, '_blank', 'width=600,height=400');
     }
     setShowShareDialog(false);
@@ -212,7 +245,7 @@ export default function HomePage() {
         await navigator.share({
           title: shareTitle,
           text: shareText,
-          url: shareUrl,
+          url: getShareUrl(),
         });
         return;
       } catch {
