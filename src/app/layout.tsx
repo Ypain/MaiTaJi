@@ -3,8 +3,8 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 
 export const metadata: Metadata = {
-  title: '宝宝起名 - AI智能起名，寓意美好',
-  description: '为宝宝起一个美好的名字，AI智能起名，寓意美好，音韵和谐。',
+  title: '麦塔记 - 记录美好时刻',
+  description: '麦塔记是母婴育儿一站式服务平台，提供AI取名、育儿问答、辅食推荐等功能，记录美好时刻，陪伴宝宝成长。',
 };
 
 export default function RootLayout({
@@ -14,9 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
-      <body className="font-sans min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
+      <body className="font-sans min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
         <Navbar />
-        <main className="min-h-[calc(100vh-4rem)]">
+        <main className="min-h-[calc(100vh-3.5rem)]">
           {children}
         </main>
       </body>
