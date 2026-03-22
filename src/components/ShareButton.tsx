@@ -21,13 +21,13 @@ interface ShareButtonProps {
 export function ShareButton({ title = '麦塔记', description = 'AI智能起名与母婴育儿服务平台', url }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [shareUrl, setShareUrl] = useState(url || '');
   
-  // 只在客户端执行，避免 hydration 错误
+  // 只在客户端设置 URL
   useEffect(() => {
-    setMounted(true);
-    setShareUrl(url || window.location.href);
+    if (!url) {
+      setShareUrl(window.location.href);
+    }
   }, [url]);
 
   const shareTitle = `${title} - 麦塔记`;
@@ -45,7 +45,7 @@ export function ShareButton({ title = '麦塔记', description = 'AI智能起名
     }
   };
 
-  // 分享到微信（生成二维码提示）
+  // 分享到微信
   const shareToWechat = () => {
     toast.info('请截图分享到微信');
   };
@@ -62,9 +62,10 @@ export function ShareButton({ title = '麦塔记', description = 'AI智能起名
     window.open(qqUrl, '_blank', 'width=600,height=400');
   };
 
-  // 使用原生分享API（移动端）
-  const handleNativeShare = async () => {
-    if (navigator.share) {
+  // 点击分享按钮 - 优先使用原生分享
+  const handleShareClick = async () => {
+    // 检查是否支持原生分享
+    if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
           title: shareTitle,
@@ -73,29 +74,13 @@ export function ShareButton({ title = '麦塔记', description = 'AI智能起名
         });
         toast.success('分享成功');
       } catch {
-        // 用户取消分享
+        // 用户取消分享，打开弹窗
+        setOpen(true);
       }
     } else {
       setOpen(true);
     }
   };
-
-  // 检测是否支持原生分享（只在客户端判断）
-  const canNativeShare = mounted && typeof navigator !== 'undefined' && navigator.share;
-
-  if (canNativeShare) {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleNativeShare}
-        className="text-gray-500 hover:text-amber-500"
-      >
-        <Share2 className="h-4 w-4" />
-        <span className="ml-1 text-xs">分享</span>
-      </Button>
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -103,7 +88,8 @@ export function ShareButton({ title = '麦塔记', description = 'AI智能起名
         <Button
           variant="ghost"
           size="sm"
-          className="text-gray-500 hover:text-amber-500"
+          onClick={handleShareClick}
+          className="text-white/80 hover:text-white hover:bg-white/10"
         >
           <Share2 className="h-4 w-4" />
           <span className="ml-1 text-xs">分享</span>
