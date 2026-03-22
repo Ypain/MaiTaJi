@@ -212,17 +212,14 @@ export default function AdminPage() {
         }
       }
 
-      if (successCount > 0 && failCount === 0) {
-        // 所有文件都上传成功，已在循环中单独提示
-      } else if (successCount > 0 && failCount > 0) {
-        // 部分成功
+      // 上传完成后，刷新列表并等待完成
+      if (successCount > 0) {
+        await fetchMediaItems();
       }
 
       pendingPreviews.forEach(url => URL.revokeObjectURL(url));
       setPendingFiles([]);
       setPendingPreviews([]);
-      
-      fetchMediaItems();
     } catch (error) {
       console.error('上传失败:', error);
       toast.error('上传过程出错', { duration: 3000 });
@@ -332,7 +329,8 @@ export default function AdminPage() {
       toast.success('删除成功', { duration: 3000 });
       setDeleteConfirm(null);
       setPreviewItem(null);
-      fetchMediaItems();
+      // 等待列表刷新完成
+      await fetchMediaItems();
     } catch (error) {
       console.error('删除失败:', error);
       toast.error(`删除失败: ${error instanceof Error ? error.message : '未知错误'}`, { duration: 3000 });
