@@ -551,7 +551,7 @@ export default function AdminPage() {
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden">
                         <video
-                          src={item.media_url}
+                          src={`${item.media_url}#t=0.1`}
                           className="absolute inset-0 w-full h-full object-cover"
                           muted
                           playsInline
