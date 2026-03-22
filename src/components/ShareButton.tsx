@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,8 +21,15 @@ interface ShareButtonProps {
 export function ShareButton({ title = '麦塔记', description = 'AI智能起名与母婴育儿服务平台', url }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [shareUrl, setShareUrl] = useState(url || '');
   
-  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+  // 只在客户端执行，避免 hydration 错误
+  useEffect(() => {
+    setMounted(true);
+    setShareUrl(url || window.location.href);
+  }, [url]);
+
   const shareTitle = `${title} - 麦塔记`;
   const shareText = description;
 
@@ -73,8 +80,8 @@ export function ShareButton({ title = '麦塔记', description = 'AI智能起名
     }
   };
 
-  // 检测是否支持原生分享
-  const canNativeShare = typeof navigator !== 'undefined' && navigator.share;
+  // 检测是否支持原生分享（只在客户端判断）
+  const canNativeShare = mounted && typeof navigator !== 'undefined' && navigator.share;
 
   if (canNativeShare) {
     return (
