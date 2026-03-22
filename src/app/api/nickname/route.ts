@@ -76,6 +76,13 @@ async function* parseStream(stream: AsyncIterable<{ content: string }> | Readabl
   }
 }
 
+// 生成随机参考词
+function getRandomWords(count: number): string {
+  const words = ['小桃', '果果', '糖糖', '团子', '布丁', '朵朵', '米粒', '豆豆', '糯米', '饺子', '汤圆', '小宝', '贝贝', '乐乐', '欢欢', '喜喜', '糖豆', '果冻', '小满', '小暑', '小雪', '冬至', '春芽', '夏荷', '秋果', '冬梅'];
+  const shuffled = words.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count).join('、');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { surname, gender, style } = await request.json();
@@ -84,7 +91,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请输入姓氏' }, { status: 400 });
     }
 
-    const systemPrompt = `你是一位专业的起名大师，擅长为宝宝取可爱、有寓意的小名（乳名）。
+    const randomId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const randomWords = getRandomWords(3);
+
+    const systemPrompt = `你是一位专业的起名大师，擅长为宝宝取可爱、有寓意的小名。
+
+【重要规则】每次请求必须生成完全不同的小名组合！
+- 禁止重复使用常见的"小桃""果果""糖糖"等
+- 必须根据本次随机参考词：${randomWords} 来创意发挥
+- 每次都要用全新的字词组合
 
 小名取名原则：
 1. 亲切可爱，朗朗上口
@@ -92,7 +107,7 @@ export async function POST(request: NextRequest) {
 3. 可以与食物、自然景物、美好事物相关
 4. 避免与长辈重名或有不雅谐音
 
-回复格式要求：
+回复格式：
 - 每个小名单独一行
 - 格式：小名 | 寓意解释
 - 提供5-8个推荐小名`;
@@ -102,9 +117,10 @@ export async function POST(request: NextRequest) {
 - 性别：${gender || '未指定'}
 - 风格偏好：${style || '没有特别偏好'}
 
-[本次请求唯一标识：${Date.now()}-${Math.random().toString(36).slice(2)}]
+【随机参考词：${randomWords}】
+【请求ID：${randomId}】
 
-请提供5-8个可爱的小名，每个附上简短解释。注意：每次生成必须完全不同的小名组合，不要重复之前的推荐。`;
+请根据随机参考词创意发挥，提供5-8个完全不同的小名。`;
 
     const messages: Message[] = [
       { role: 'system', content: systemPrompt },
@@ -113,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     const stream = await callDeepSeek(messages, {
       model: isSandbox ? 'deepseek-v3-2-251201' : 'deepseek-chat',
-      temperature: 0.95,
+      temperature: 1.2,
     });
 
     const encoder = new TextEncoder();

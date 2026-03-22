@@ -76,6 +76,16 @@ async function* parseStream(stream: AsyncIterable<{ content: string }> | Readabl
   }
 }
 
+// 生成随机参考字
+function getRandomChars(count: number): string {
+  const chars = '明德志远承瀚宇轩浩然泽睿博雅俊逸晨曦景行思齐文博弘毅嘉禾瑞霖雨泽俊杰天翔乐安康宁寿福喜安泰和顺';
+  let result = '';
+  for (let i = 0; i < count; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { surname, gender, style, additionalInfo } = await request.json();
@@ -84,20 +94,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请输入姓氏' }, { status: 400 });
     }
 
-    const systemPrompt = `你是一位专业的起名大师，精通中国传统姓名学和现代命名艺术。你的任务是为宝宝起一个寓意美好、音韵和谐的好名字。
+    const randomId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const randomChars = getRandomChars(4);
+
+    const systemPrompt = `你是一位专业的起名大师，精通中国传统姓名学和现代命名艺术。
+
+【重要规则】每次请求必须生成完全不同的名字组合！
+- 禁止重复使用常见的"承远""明远""景行"等名字
+- 必须根据本次随机参考字：${randomChars} 来创意组合
+- 每次都要用全新的字词组合
 
 命名原则：
-1. 名字要有美好寓意，体现父母对孩子的期望
-2. 音韵要和谐，读起来朗朗上口
-3. 字形要美观，易于书写
-4. 考虑五行平衡（如果用户提供了相关信息）
-5. 避免不雅谐音和生僻字
+1. 名字要有美好寓意
+2. 音韵和谐，朗朗上口
+3. 字形美观，易于书写
+4. 避免不雅谐音和生僻字
 
-回复格式要求：
+回复格式：
 - 每个名字单独一行
 - 格式：名字 | 寓意解释
-- 提供3-5个推荐名字
-- 最后简单总结命名思路`;
+- 提供3-5个推荐名字`;
 
     const userPrompt = `请为宝宝起名：
 - 姓氏：${surname}
@@ -105,9 +121,10 @@ export async function POST(request: NextRequest) {
 - 偏好风格：${style || '没有特别偏好'}
 ${additionalInfo ? `- 其他期望：${additionalInfo}` : ''}
 
-[本次请求唯一标识：${Date.now()}-${Math.random().toString(36).slice(2)}]
+【随机参考字：${randomChars}】
+【请求ID：${randomId}】
 
-请提供3-5个好名字，每个名字附上简短的寓意解释。注意：每次生成必须完全不同的名字组合，不要重复之前的推荐。`;
+请根据随机参考字创意组合，提供3-5个完全不同的名字。`;
 
     const messages: Message[] = [
       { role: 'system', content: systemPrompt },
@@ -116,7 +133,7 @@ ${additionalInfo ? `- 其他期望：${additionalInfo}` : ''}
 
     const stream = await callDeepSeek(messages, {
       model: isSandbox ? 'deepseek-v3-2-251201' : 'deepseek-chat',
-      temperature: 0.95,
+      temperature: 1.2,
     });
 
     const encoder = new TextEncoder();
