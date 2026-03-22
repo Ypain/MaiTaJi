@@ -121,17 +121,24 @@ export default function AdminPage() {
     if (files.length === 0) return;
 
     // 支持的文件类型（仅支持浏览器原生可播放的格式）
-    // 图片: jpg, png, gif, webp
-    // 视频: mp4(H.264), webm(VP8/VP9) - 浏览器原生支持
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/gif', 'image/webp',
       'video/mp4', 'video/webm'
     ];
+    
+    // 支持的扩展名（作为MIME类型的备选检测）
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm'];
 
     const validFiles = files.filter(file => {
-      // 检查文件类型
-      if (!allowedTypes.includes(file.type)) {
-        toast.error(`文件 ${file.name} 类型不支持，图片支持 jpg/png/gif/webp，视频仅支持 mp4/webm 格式`, { duration: 3000 });
+      // 获取文件扩展名
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      
+      // 检查MIME类型或扩展名
+      const typeValid = allowedTypes.includes(file.type);
+      const extValid = allowedExtensions.includes(ext);
+      
+      if (!typeValid && !extValid) {
+        toast.error(`文件 ${file.name} 类型不支持 (MIME: ${file.type || '未知'}, 扩展名: ${ext})，图片支持 jpg/png/gif/webp，视频仅支持 mp4/webm 格式`, { duration: 3000 });
         return false;
       }
       if (file.size > 300 * 1024 * 1024) {

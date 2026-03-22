@@ -12,19 +12,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '未找到文件' }, { status: 400 });
     }
     
-    // 检查文件类型（仅支持浏览器原生可播放的格式）
-    // 图片: jpg, png, gif, webp - 浏览器原生支持
-    // 视频: mp4(H.264), webm(VP8/VP9) - 浏览器原生支持
-    // 注意: mov/avi/wmv等格式浏览器不支持原生播放，需要转码
+    // 支持的MIME类型
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/gif', 'image/webp',
       'video/mp4', 'video/webm'
     ];
-    if (!allowedTypes.includes(file.type)) {
-      console.log('不支持的文件类型:', file.type, '文件名:', file.name);
+    
+    // 支持的扩展名（作为MIME类型的备选检测）
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm'];
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+    
+    // 检查MIME类型或扩展名
+    const typeValid = allowedTypes.includes(file.type);
+    const extValid = allowedExtensions.includes(fileExt);
+    
+    if (!typeValid && !extValid) {
+      console.log('不支持的文件类型:', file.type, '扩展名:', fileExt, '文件名:', file.name);
       return NextResponse.json({ 
         success: false, 
-        error: `不支持的文件类型: ${file.type || '未知'}，图片支持 jpg/png/gif/webp，视频仅支持 mp4/webm 格式（确保浏览器可直接播放）` 
+        error: `不支持的文件类型 (MIME: ${file.type || '未知'}, 扩展名: ${fileExt})，图片支持 jpg/png/gif/webp，视频仅支持 mp4/webm 格式` 
       }, { status: 400 });
     }
     
@@ -41,7 +47,7 @@ export async function POST(request: NextRequest) {
     // 生成文件名
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const ext = fileExt || 'jpg'; // 使用前面提取的扩展名，默认jpg
     
     // 从 folder 中提取中文类目名（如 "age-category/出生" -> "出生"）
     const categoryMatch = folder.match(/age-category\/(.+)$/);
