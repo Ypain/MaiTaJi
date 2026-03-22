@@ -4,11 +4,20 @@ import { CATEGORY_PATH_MAP, type AgeCategory } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[Upload API] 开始处理上传请求...');
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const folder = formData.get('folder') as string || 'uploads';
     
+    console.log('[Upload API] 文件信息:', { 
+      name: file?.name, 
+      type: file?.type, 
+      size: file?.size,
+      folder 
+    });
+    
     if (!file) {
+      console.log('[Upload API] 错误: 未找到文件');
       return NextResponse.json({ success: false, error: '未找到文件' }, { status: 400 });
     }
     
@@ -65,6 +74,8 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseClient();
     const bucketName = 'images';
     
+    console.log('[Upload API] 开始上传到 Supabase Storage...', { storagePath, bucketName, fileSize: buffer.length });
+    
     // 上传文件到 Supabase Storage
     const { data, error } = await supabase.storage
       .from(bucketName)
@@ -74,7 +85,7 @@ export async function POST(request: NextRequest) {
       });
     
     if (error) {
-      console.error('Supabase Storage 上传错误:', error);
+      console.error('[Upload API] Supabase Storage 上传错误:', error);
       
       if (error.message.includes('not found') || error.message.includes('does not exist') || error.message.includes('Bucket not found')) {
         return NextResponse.json({
@@ -86,7 +97,7 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({
         success: false,
-        error: '上传失败',
+        error: '上传到存储失败',
         details: error.message
       }, { status: 500 });
     }
@@ -98,6 +109,8 @@ export async function POST(request: NextRequest) {
     
     // 判断媒体类型
     const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+    
+    console.log('[Upload API] 上传成功:', { path: data.path, mediaType, url: urlData.publicUrl });
     
     return NextResponse.json({
       success: true,
@@ -111,7 +124,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('上传失败:', error);
+    console.error('[Upload API] 上传失败:', error);
     return NextResponse.json(
       { success: false, error: '上传失败', details: error instanceof Error ? error.message : '未知错误' },
       { status: 500 }

@@ -217,7 +217,8 @@ export default function AdminPage() {
           toast.success(`${file.name} 上传成功`, { duration: 3000 });
         } catch (error) {
           console.error(`文件 ${file.name} 上传失败:`, error);
-          toast.error(`${file.name} 上传失败`, { duration: 3000 });
+          const errorMsg = error instanceof Error ? error.message : '未知错误';
+          toast.error(`${file.name} 上传失败: ${errorMsg}`, { duration: 4000 });
           failCount++;
         }
       }
