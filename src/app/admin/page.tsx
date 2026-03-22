@@ -199,13 +199,13 @@ export default function AdminPage() {
         
         console.log(`[上传] 已获取签名URL，开始直传 Supabase...`);
         
-        // 第二步：直接上传到 Supabase Storage
+        // 第二步：直接上传到 Supabase Storage（使用 POST + FormData）
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+        
         const uploadResponse = await fetch(signatureResult.data.signedUrl, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': file.type,
-          },
-          body: file,
+          method: 'POST',
+          body: uploadFormData,
         });
         
         if (!uploadResponse.ok) {
