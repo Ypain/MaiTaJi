@@ -58,7 +58,9 @@ export default function AdminPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/me');
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+        });
         if (response.ok) {
           const data = await response.json();
           if (data.user?.role === 'admin') {
@@ -85,7 +87,9 @@ export default function AdminPage() {
   const fetchMediaItems = async (): Promise<void> => {
     console.log('[fetchMediaItems] 开始获取数据...');
     try {
-      const response = await fetch('/api/age-category-content');
+      const response = await fetch('/api/age-category-content', {
+        credentials: 'include',
+      });
       const result = await response.json();
       console.log('[fetchMediaItems] 获取到数据:', result.data?.length, '条');
       if (result.success) {
@@ -189,6 +193,7 @@ export default function AdminPage() {
           const uploadResponse = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
+            credentials: 'include',
           });
 
           const uploadResult = await uploadResponse.json();
@@ -205,6 +210,7 @@ export default function AdminPage() {
               mediaUrl: uploadResult.data.url,
               mediaType: uploadResult.data.mediaType, // 使用后端返回的媒体类型
             }),
+            credentials: 'include',
           });
 
           const saveResult = await saveResponse.json();
@@ -332,6 +338,7 @@ export default function AdminPage() {
     try {
       const response = await fetch(`/api/age-category-content?id=${item.id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       const result = await response.json();
