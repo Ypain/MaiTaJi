@@ -180,72 +180,85 @@ export default function AdminPage() {
     let successCount = 0;
     let failCount = 0;
 
-    try {
-      for (let i = 0; i < pendingFiles.length; i++) {
-        const file = pendingFiles[i];
-        const mediaType: MediaType = file.type.startsWith('image/') ? 'image' : 'video';
+    for (let i = 0; i < pendingFiles.length; i++) {
+      const file = pendingFiles[i];
 
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('folder', `age-category/${selectedCategory}`);
-          
-          const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include',
-          });
-
-          const uploadResult = await uploadResponse.json();
-          
-          if (!uploadResult.success) {
-            throw new Error(uploadResult.error || '上传失败');
-          }
-
-          const saveResponse = await fetch('/api/age-category-content', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              category: selectedCategory,
-              mediaUrl: uploadResult.data.url,
-              mediaType: uploadResult.data.mediaType, // 使用后端返回的媒体类型
-            }),
-            credentials: 'include',
-          });
-
-          const saveResult = await saveResponse.json();
-          
-          if (!saveResult.success) {
-            throw new Error(saveResult.error || '保存失败');
-          }
-
-          successCount++;
-          toast.success(`${file.name} 上传成功`, { duration: 3000 });
-        } catch (error) {
-          console.error(`文件 ${file.name} 上传失败:`, error);
-          const errorMsg = error instanceof Error ? error.message : '未知错误';
-          toast.error(`${file.name} 上传失败: ${errorMsg}`, { duration: 4000 });
-          failCount++;
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', `age-category/${selectedCategory}`);
+        
+        console.log(`[上传] 开始上传文件: ${file.name}, 大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+        
+        // 创建 AbortController 用于超时控制（5分钟超时）
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        // 检查响应类型
+        const contentType = uploadResponse.headers.get('content-type') || '';
+        console.log(`[上传] 响应状态: ${uploadResponse.status}, Content-Type: ${contentType}`);
+        
+        if (!contentType.includes('application/json')) {
+          const text = await uploadResponse.text();
+          console.error('[上传] 非JSON响应:', text.substring(0, 200));
+          throw new Error(`服务器返回非JSON响应 (状态码: ${uploadResponse.status})，可能是登录已过期，请刷新页面重试`);
         }
-      }
+        
+        const uploadResult = await uploadResponse.json();
+        
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error || '上传失败');
+        }
 
-      // 上传完成后，刷新列表并等待完成
-      if (successCount > 0) {
-        console.log('上传成功，正在刷新列表...');
-        await fetchMediaItems();
-        console.log('列表刷新完成');
-      }
+        const saveResponse = await fetch('/api/age-category-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            category: selectedCategory,
+            mediaUrl: uploadResult.data.url,
+            mediaType: uploadResult.data.mediaType,
+          }),
+          credentials: 'include',
+        });
 
-      // 清空待上传文件
-      pendingPreviews.forEach(url => URL.revokeObjectURL(url));
-      setPendingFiles([]);
-      setPendingPreviews([]);
-    } catch (error) {
-      console.error('上传失败:', error);
-      toast.error('上传过程出错', { duration: 3000 });
-    } finally {
-      setUploading(false);
+        const saveResult = await saveResponse.json();
+        
+        if (!saveResult.success) {
+          throw new Error(saveResult.error || '保存失败');
+        }
+
+        successCount++;
+        console.log(`[上传] 文件 ${file.name} 上传成功`);
+        toast.success(`${file.name} 上传成功`, { duration: 3000 });
+      } catch (error) {
+        console.error(`文件 ${file.name} 上传失败:`, error);
+        const errorMsg = error instanceof Error ? error.message : '未知错误';
+        toast.error(`${file.name} 上传失败: ${errorMsg}`, { duration: 4000 });
+        failCount++;
+      }
     }
+
+    // 上传完成后，刷新列表并等待完成
+    if (successCount > 0) {
+      console.log('上传成功，正在刷新列表...');
+      await fetchMediaItems();
+      console.log('列表刷新完成');
+    }
+
+    // 清空待上传文件
+    pendingPreviews.forEach(url => URL.revokeObjectURL(url));
+    setPendingFiles([]);
+    setPendingPreviews([]);
+    setUploading(false);
   };
 
   // 保存图片 - 手机端提示长按保存
