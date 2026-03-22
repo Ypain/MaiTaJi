@@ -128,6 +128,8 @@ export default function AdminPage() {
 
     // 支持的文件类型（仅做扩展名检查，MIME类型在移动端可能不准确）
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'mov', '3gp'];
+    // Supabase Storage 免费版单文件限制 50MB
+    const maxFileSize = 50 * 1024 * 1024;
 
     const validFiles = files.filter(file => {
       // 获取文件扩展名
@@ -140,8 +142,8 @@ export default function AdminPage() {
         toast.error(`文件 ${file.name} 格式不支持，图片支持 jpg/png/gif/webp，视频支持 mp4/webm/mov/3gp`, { duration: 3000 });
         return false;
       }
-      if (file.size > 300 * 1024 * 1024) {
-        toast.error(`文件 ${file.name} 超过300MB限制`, { duration: 3000 });
+      if (file.size > maxFileSize) {
+        toast.error(`文件 ${file.name} 超过50MB限制（当前${(file.size / 1024 / 1024).toFixed(1)}MB）`, { duration: 3000 });
         return false;
       }
       return true;
@@ -459,7 +461,7 @@ export default function AdminPage() {
                   <div className="flex flex-col items-center gap-2">
                     <Video className="h-6 w-6 text-blue-500" />
                     <span className="text-blue-600 font-medium">选择视频</span>
-                    <span className="text-xs text-gray-500">mp4/webm/mov，最大300MB</span>
+                    <span className="text-xs text-gray-500">mp4/webm/mov，最大50MB</span>
                   </div>
                 </Button>
               </div>
