@@ -1,7 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 
-// 修正分类名称并同步
+// 删除所有图片记录和云端文件
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = getSupabaseClient();
+    const bucket = 'images';
+    
+    console.log('[清空图片] 开始');
+    
+    // 1. 列出 age-category 文件夹下所有文件
+    const { data: folders, error: listError } = await supabase.storage
+      .from(bucket)
+      .list('age-category', { limit: 1000 });
+    
+    if (listError) {
+      console.error('[清空图片] 列出文件夹失败:', listError);
+    }
+    
+    let deletedFiles = 0;
+    
+    // 2. 删除每个文件夹下的所有文件
+    if (folders && folders.length > 0) {
+      for (const folder of folders) {
+        if (folder.name.startsWith('.')) continue;
+        
+        const { data: files } = await supabase.storage
+          .from(bucket)
+          .list(`age-category/${folder.name}`, { limit: 1000 });
+        
+        if (files && files.length > 0) {
+          const filePaths = files.map(f => `age-category/${folder.name}/${f.name}`);
+          
+          const { error: deleteError } = await supabase.storage
+            .from(bucket)
+            .remove(filePaths);
+          
+          if (deleteError) {
+            console.error(`[清空图片] 删除文件夹 ${folder.name} 失败:`, deleteError);
+          } else {
+            deletedFiles += files.length;
+            console.log(`[清空图片] 删除文件夹 ${folder.name}: ${files.length} 个文件`);
+          }
+        }
+      }
+    }
+    
+    // 3. 清空数据库记录
+    const { error: dbError } = await supabase
+      .from('age_category_content')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // 删除所有记录
+    
+    if (dbError) {
+      console.error('[清空图片] 清空数据库失败:', dbError);
+    }
+    
+    // 4. 确认清空
+    const { count } = await supabase
+      .from('age_category_content')
+      .select('*', { count: 'exact', head: true });
+    
+    return NextResponse.json({
+      success: true,
+      message: `已删除云端 ${deletedFiles} 个文件，数据库记录已清空`,
+      deletedFiles,
+      remainingRecords: count || 0
+    });
+    
+  } catch (error) {
+    console.error('[清空图片] 失败:', error);
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+  }
+}
+
+// 查看当前统计或修正分类
 export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseClient();
@@ -18,35 +91,21 @@ export async function POST(request: NextRequest) {
     ];
     
     for (const correction of corrections) {
-      const { error } = await supabase
+      await supabase
         .from('age_category_content')
         .update({ category: correction.new })
         .eq('category', correction.old);
-      
-      if (error) {
-        console.log(`[修正分类] ${correction.old} -> ${correction.new} 失败:`, error.message);
-      } else {
-        console.log(`[修正分类] ${correction.old} -> ${correction.new} 完成`);
-      }
     }
     
     // 同步新图片
-    const { data: folders, error: listError } = await supabase.storage
+    const { data: folders } = await supabase.storage
       .from(bucket)
-      .list('age-category', {
-        limit: 1000,
-        sortBy: { column: 'created_at', order: 'desc' }
-      });
-    
-    if (listError) {
-      return NextResponse.json({ success: false, error: listError.message }, { status: 500 });
-    }
+      .list('age-category', { limit: 1000, sortBy: { column: 'created_at', order: 'desc' } });
     
     if (!folders || folders.length === 0) {
       return NextResponse.json({ success: true, message: 'Storage 文件夹为空', synced: 0 });
     }
     
-    // 获取已存在的记录
     const { data: existingRecords } = await supabase
       .from('age_category_content')
       .select('media_url');
@@ -55,7 +114,6 @@ export async function POST(request: NextRequest) {
       (existingRecords || []).map((r: { media_url: string }) => r.media_url)
     );
     
-    // 分类映射
     const categoryMap: Record<string, string> = {
       '___': '四个月',
       '__': '出生',
@@ -106,19 +164,14 @@ export async function POST(request: NextRequest) {
     
     let synced = 0;
     if (newRecords.length > 0) {
-      const { data: insertedData, error: insertError } = await supabase
+      const { data: insertedData } = await supabase
         .from('age_category_content')
         .insert(newRecords)
         .select();
       
-      if (insertError) {
-        console.error('[同步图片] 插入失败:', insertError);
-      } else {
-        synced = insertedData?.length || 0;
-      }
+      synced = insertedData?.length || 0;
     }
     
-    // 返回统计
     const { data: allRecords } = await supabase
       .from('age_category_content')
       .select('category, media_type');
@@ -139,10 +192,7 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('[同步图片] 失败:', error);
-    return NextResponse.json(
-      { success: false, error: String(error) },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }
 
@@ -164,14 +214,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     success: true,
     total: allRecords?.length || 0,
-    stats,
-    sql: `CREATE TABLE IF NOT EXISTS age_category_content (
-  id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-  category VARCHAR(50) NOT NULL,
-  media_url TEXT NOT NULL,
-  media_type VARCHAR(20) NOT NULL DEFAULT 'image',
-  description TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);`
+    stats
   });
 }
