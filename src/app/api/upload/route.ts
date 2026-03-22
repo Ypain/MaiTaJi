@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 import { CATEGORY_PATH_MAP, type AgeCategory } from '@/lib/constants';
 
+// 设置 API 路由超时时间为 2 分钟（用于大视频文件上传）
+export const maxDuration = 120;
+
 export async function POST(request: NextRequest) {
   try {
     console.log('[Upload API] 开始处理上传请求...');
