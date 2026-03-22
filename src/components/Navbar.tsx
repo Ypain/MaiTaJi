@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, User, LogOut, Menu, Settings } from 'lucide-react';
+import { Baby, User, LogOut, Menu, Settings } from 'lucide-react';
 
 interface User {
   id: string;
@@ -63,12 +63,14 @@ export default function Navbar() {
   // 服务端渲染时不显示用户状态，避免 hydration 错误
   if (!mounted) {
     return (
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-pink-100">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <Camera className="h-8 w-8 text-amber-600" />
-              <span className="text-xl font-bold text-gray-900">麦塔记</span>
+              <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+                <Baby className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900">宝宝起名</span>
             </Link>
             <div className="h-8 w-20 bg-gray-200 animate-pulse rounded" />
           </div>
@@ -78,26 +80,16 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-pink-100">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Camera className="h-8 w-8 text-amber-600" />
-            <span className="text-xl font-bold text-gray-900">麦塔记</span>
+            <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+              <Baby className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-gray-900">宝宝起名</span>
           </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
-            <Link href="/" className="text-gray-700 hover:text-amber-600 transition-colors">
-              首页
-            </Link>
-            {user && (
-              <Link href="/favorites" className="text-gray-700 hover:text-amber-600 transition-colors">
-                我的收藏
-              </Link>
-            )}
-          </div>
 
           {/* User Menu */}
           <div className="flex items-center gap-4">
@@ -107,9 +99,9 @@ export default function Navbar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                      <Avatar className="h-9 w-9">
+                      <Avatar className="h-8 w-8">
                         <AvatarImage src={user.avatar || undefined} alt={user.name} />
-                        <AvatarFallback className="bg-amber-500 text-white font-medium">
+                        <AvatarFallback className="bg-pink-500 text-white font-medium text-sm">
                           {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                         </AvatarFallback>
                       </Avatar>
@@ -122,24 +114,17 @@ export default function Navbar() {
                       <p className="text-xs leading-none text-muted-foreground">账号：{user.username}</p>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/favorites" className="cursor-pointer">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>我的收藏</span>
-                      </Link>
-                    </DropdownMenuItem>
                     {user.role === 'admin' && (
                       <>
-                        <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                          <Link href="/admin" className="cursor-pointer text-amber-600">
+                          <Link href="/admin" className="cursor-pointer text-pink-600">
                             <Settings className="mr-2 h-4 w-4" />
                             <span>后台管理</span>
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                       </>
                     )}
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>退出登录</span>
@@ -149,7 +134,7 @@ export default function Navbar() {
 
                 {/* Mobile menu button */}
                 <button
-                  className="md:hidden p-2 text-gray-700 hover:text-amber-600"
+                  className="md:hidden p-2 text-gray-700 hover:text-pink-500"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 >
                   <Menu className="h-6 w-6" />
@@ -165,7 +150,7 @@ export default function Navbar() {
                     </Button>
                   </Link>
                   <Link href="/register">
-                    <Button className="bg-amber-600 hover:bg-amber-700">
+                    <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
                       注册
                     </Button>
                   </Link>
@@ -173,7 +158,7 @@ export default function Navbar() {
 
                 {/* Mobile menu button */}
                 <button
-                  className="md:hidden p-2 text-gray-700 hover:text-amber-600"
+                  className="md:hidden p-2 text-gray-700 hover:text-pink-500"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 >
                   <Menu className="h-6 w-6" />
@@ -185,28 +170,12 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
+          <div className="md:hidden py-4 border-t border-pink-100">
             <div className="flex flex-col gap-2">
-              <Link 
-                href="/" 
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                首页
-              </Link>
-              {user && (
-                <Link 
-                  href="/favorites" 
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  我的收藏
-                </Link>
-              )}
               {user?.role === 'admin' && (
                 <Link 
                   href="/admin" 
-                  className="px-4 py-2 text-amber-600 hover:bg-amber-50 rounded font-medium"
+                  className="px-4 py-2 text-pink-600 hover:bg-pink-50 rounded font-medium"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   后台管理
