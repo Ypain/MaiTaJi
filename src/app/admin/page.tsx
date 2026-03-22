@@ -83,11 +83,14 @@ export default function AdminPage() {
 
   // 获取内容列表
   const fetchMediaItems = async (): Promise<void> => {
+    console.log('[fetchMediaItems] 开始获取数据...');
     try {
       const response = await fetch('/api/age-category-content');
       const result = await response.json();
+      console.log('[fetchMediaItems] 获取到数据:', result.data?.length, '条');
       if (result.success) {
         setMediaItems(result.data || []);
+        console.log('[fetchMediaItems] 数据已更新到state');
       } else {
         console.error('获取内容失败:', result.error);
         toast.error(result.error || '获取内容失败', { duration: 3000 });
