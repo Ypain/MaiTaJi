@@ -78,7 +78,7 @@ async function* parseStream(stream: AsyncIterable<{ content: string }> | Readabl
 
 export async function POST(request: NextRequest) {
   try {
-    const { surname, gender, birthDate, wuxing, expectation } = await request.json();
+    const { surname, gender, style, additionalInfo } = await request.json();
     
     if (!surname) {
       return NextResponse.json({ error: '请输入姓氏' }, { status: 400 });
@@ -102,11 +102,10 @@ export async function POST(request: NextRequest) {
     const userPrompt = `请为宝宝起名：
 - 姓氏：${surname}
 - 性别：${gender || '未指定'}
-- 出生日期：${birthDate || '未提供'}
-- 五行偏好：${wuxing || '未提供'}
-- 期望寓意：${expectation || '希望名字寓意美好'}
+- 偏好风格：${style || '没有特别偏好'}
+${additionalInfo ? `- 其他期望：${additionalInfo}` : ''}
 
-请提供3-5个好名字，每个名字附上简短的寓意解释。`;
+请提供3-5个好名字，每个名字附上简短的寓意解释。请确保每次生成的名字都有所不同。`;
 
     const messages: Message[] = [
       { role: 'system', content: systemPrompt },
@@ -115,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     const stream = await callDeepSeek(messages, {
       model: isSandbox ? 'deepseek-v3-2-251201' : 'deepseek-chat',
-      temperature: 0.8,
+      temperature: 0.95,
     });
 
     const encoder = new TextEncoder();

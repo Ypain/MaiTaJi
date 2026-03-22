@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
 
     const stream = await callDeepSeek(messages, {
       model: isSandbox ? 'deepseek-v3-2-251201' : 'deepseek-chat',
-      temperature: 0.8,
+      temperature: 0.95,
     });
 
     const encoder = new TextEncoder();
