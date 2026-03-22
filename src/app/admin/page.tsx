@@ -424,21 +424,45 @@ export default function AdminPage() {
               <input
                 ref={fileInputRef}
                 type="file"
+                accept="image/*,video/*"
                 multiple
                 className="hidden"
                 onChange={handleFileSelect}
               />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                variant="outline"
-                className="border-dashed border-2 border-amber-300 hover:border-amber-500 h-32 w-full md:w-auto md:px-12"
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <Upload className="h-8 w-8 text-amber-500" />
-                  <span className="text-amber-600 font-medium">选择图片或视频</span>
-                  <span className="text-xs text-gray-500">支持 jpg/png/gif/webp/mp4/webm，最大300MB</span>
-                </div>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.accept = 'image/*';
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  variant="outline"
+                  className="border-dashed border-2 border-amber-300 hover:border-amber-500 h-24 flex-1"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-6 w-6 text-amber-500" />
+                    <span className="text-amber-600 font-medium">选择图片</span>
+                    <span className="text-xs text-gray-500">jpg/png/gif/webp</span>
+                  </div>
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.accept = 'video/*';
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  variant="outline"
+                  className="border-dashed border-2 border-blue-300 hover:border-blue-500 h-24 flex-1"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Video className="h-6 w-6 text-blue-500" />
+                    <span className="text-blue-600 font-medium">选择视频</span>
+                    <span className="text-xs text-gray-500">mp4/webm/mov，最大300MB</span>
+                  </div>
+                </Button>
+              </div>
             </div>
 
             {pendingFiles.length > 0 && (
