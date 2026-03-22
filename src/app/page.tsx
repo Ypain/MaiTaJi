@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -11,8 +12,10 @@ import {
   Calculator,
   TrendingUp,
   Syringe,
-  Share2
+  Share2,
+  Check
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // 功能卡片配置
 const features = [
@@ -84,7 +87,9 @@ const features = [
 ];
 
 export default function HomePage() {
-  // 简单的分享函数
+  const [copied, setCopied] = useState(false);
+
+  // 分享函数
   const handleShare = async () => {
     const shareData = {
       title: '麦塔记 - AI智能起名与母婴育儿服务平台',
@@ -92,46 +97,60 @@ export default function HomePage() {
       url: window.location.href,
     };
     
+    // 尝试使用原生分享
     if (navigator.share) {
       try {
         await navigator.share(shareData);
+        return;
       } catch {
-        // 用户取消分享
+        // 用户取消分享，不做处理
       }
-    } else {
-      // 不支持原生分享，复制链接
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        alert('链接已复制到剪贴板');
-      } catch {
-        // 复制失败
-      }
+    }
+    
+    // 不支持原生分享或取消，复制链接
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      toast.success('链接已复制，快去分享给朋友吧！');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('复制失败，请手动复制链接');
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white relative">
+      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
         <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-          {/* 右上角分享按钮 */}
-          <button
-            onClick={handleShare}
-            className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors text-white/80 hover:text-white"
-          >
-            <Share2 className="h-4 w-4" />
-            <span className="text-xs">分享</span>
-          </button>
           <p className="text-lg text-white/90">记录美好时刻，陪伴宝宝成长</p>
         </div>
       </div>
 
       {/* Features Grid */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-          <span className="w-1 h-6 bg-amber-500 rounded"></span>
-          全部功能
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+            <span className="w-1 h-6 bg-amber-500 rounded"></span>
+            全部功能
+          </h2>
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors"
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4" />
+                <span className="text-sm">已复制</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4" />
+                <span className="text-sm">分享</span>
+              </>
+            )}
+          </button>
+        </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {features.map((feature) => {
