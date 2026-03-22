@@ -12,16 +12,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '未找到文件' }, { status: 400 });
     }
     
-    // 检查文件类型
+    // 检查文件类型（仅支持浏览器原生可播放的格式）
+    // 图片: jpg, png, gif, webp - 浏览器原生支持
+    // 视频: mp4(H.264), webm(VP8/VP9) - 浏览器原生支持
+    // 注意: mov/avi/wmv等格式浏览器不支持原生播放，需要转码
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv'
+      'video/mp4', 'video/webm'
     ];
     if (!allowedTypes.includes(file.type)) {
       console.log('不支持的文件类型:', file.type, '文件名:', file.name);
       return NextResponse.json({ 
         success: false, 
-        error: `不支持的文件类型: ${file.type || '未知'}，仅支持 jpg/png/gif/webp/mp4/webm/mov` 
+        error: `不支持的文件类型: ${file.type || '未知'}，图片支持 jpg/png/gif/webp，视频仅支持 mp4/webm 格式（确保浏览器可直接播放）` 
       }, { status: 400 });
     }
     

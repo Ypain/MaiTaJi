@@ -119,16 +119,18 @@ export default function AdminPage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // 支持的文件类型（与后端一致）
+    // 支持的文件类型（仅支持浏览器原生可播放的格式）
+    // 图片: jpg, png, gif, webp
+    // 视频: mp4(H.264), webm(VP8/VP9) - 浏览器原生支持
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv'
+      'video/mp4', 'video/webm'
     ];
 
     const validFiles = files.filter(file => {
       // 检查文件类型
       if (!allowedTypes.includes(file.type)) {
-        toast.error(`文件 ${file.name} 类型不支持 (${file.type || '未知'})，仅支持 jpg/png/gif/webp/mp4/webm/mov`, { duration: 3000 });
+        toast.error(`文件 ${file.name} 类型不支持，图片支持 jpg/png/gif/webp，视频仅支持 mp4/webm 格式`, { duration: 3000 });
         return false;
       }
       if (file.size > 300 * 1024 * 1024) {
@@ -395,7 +397,7 @@ export default function AdminPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,.mov"
+                accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm"
                 multiple
                 className="hidden"
                 onChange={handleFileSelect}
@@ -408,7 +410,7 @@ export default function AdminPage() {
                 <div className="flex flex-col items-center gap-2">
                   <Upload className="h-8 w-8 text-amber-500" />
                   <span className="text-amber-600 font-medium">选择图片或视频</span>
-                  <span className="text-xs text-gray-500">支持多选，单个文件最大300MB</span>
+                  <span className="text-xs text-gray-500">支持 jpg/png/gif/webp/mp4/webm，最大300MB</span>
                 </div>
               </Button>
             </div>
