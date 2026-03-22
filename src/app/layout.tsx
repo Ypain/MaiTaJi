@@ -45,6 +45,9 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -54,9 +57,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN">
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-      </head>
       <body className="font-sans min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
         <Navbar />
         <main className="min-h-[calc(100vh-3.5rem)]">
