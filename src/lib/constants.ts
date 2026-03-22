@@ -34,5 +34,39 @@ export const AGE_CATEGORIES = [
 
 export type AgeCategory = typeof AGE_CATEGORIES[number];
 
+// 中文类目到英文路径的映射（Storage 路径不支持中文）
+export const CATEGORY_PATH_MAP: Record<AgeCategory, string> = {
+  '出生': 'born',
+  '一个月': '1-month',
+  '两个月': '2-month',
+  '三个月': '3-month',
+  '四个月': '4-month',
+  '五个月': '5-month',
+  '六个月': '6-month',
+  '七个月': '7-month',
+  '八个月': '8-month',
+  '九个月': '9-month',
+  '10个月': '10-month',
+  '11个月': '11-month',
+  '一岁': '1-year',
+  '两岁': '2-year',
+  '三岁': '3-year',
+  '四岁': '4-year',
+  '五岁': '5-year',
+  '6岁': '6-year',
+  '7岁': '7-year',
+  '8岁': '8-year',
+  '9岁': '9-year',
+  '10岁': '10-year',
+  '11岁': '11-year',
+  '12岁': '12-year',
+  '13岁': '13-year',
+  '14岁': '14-year',
+  '15岁': '15-year',
+  '16岁': '16-year',
+  '17岁': '17-year',
+  '18岁': '18-year',
+};
+
 // 媒体类型
 export type MediaType = 'image' | 'video';

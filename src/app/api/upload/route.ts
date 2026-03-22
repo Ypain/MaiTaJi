@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
+import { CATEGORY_PATH_MAP, type AgeCategory } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const folder = formData.get('folder') as string || 'uploads';
-    const category = formData.get('category') as string || folder; // 保留原始中文类目名
     
     if (!file) {
       return NextResponse.json({ success: false, error: '未找到文件' }, { status: 400 });
@@ -33,11 +33,17 @@ export async function POST(request: NextRequest) {
     const randomStr = Math.random().toString(36).substring(2, 8);
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     
-    // Storage 路径：分段编码，保留 / 分隔符
-    const fileName = folder
-      .split('/')
-      .map(part => encodeURIComponent(part))
-      .join('/') + `/${timestamp}_${randomStr}.${ext}`;
+    // 从 folder 中提取中文类目名（如 "age-category/出生" -> "出生"）
+    const categoryMatch = folder.match(/age-category\/(.+)$/);
+    const categoryChinese = categoryMatch ? categoryMatch[1] as AgeCategory : null;
+    
+    // Storage 路径使用英文，避免中文路径问题
+    let storagePath: string;
+    if (categoryChinese && CATEGORY_PATH_MAP[categoryChinese]) {
+      storagePath = `age-category/${CATEGORY_PATH_MAP[categoryChinese]}/${timestamp}_${randomStr}.${ext}`;
+    } else {
+      storagePath = `${folder}/${timestamp}_${randomStr}.${ext}`;
+    }
     
     // 使用 Supabase Storage 上传
     const supabase = getSupabaseClient();
@@ -46,7 +52,7 @@ export async function POST(request: NextRequest) {
     // 上传文件到 Supabase Storage
     const { data, error } = await supabase.storage
       .from(bucketName)
-      .upload(fileName, buffer, {
+      .upload(storagePath, buffer, {
         contentType: file.type,
         upsert: false,
       });
@@ -85,7 +91,7 @@ export async function POST(request: NextRequest) {
         mediaType: mediaType,
         fileName: file.name,
         fileSize: file.size,
-        category: category, // 返回原始中文类目名，用于后续写入数据库
+        category: categoryChinese || folder, // 返回中文类目名，用于数据库记录
       }
     });
   } catch (error) {
