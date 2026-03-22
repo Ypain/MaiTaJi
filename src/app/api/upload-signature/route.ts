@@ -10,30 +10,27 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { fileName, fileType, folder } = body;
     
-    if (!fileName || !fileType || !folder) {
+    if (!fileName || !folder) {
       return NextResponse.json({ 
         success: false, 
         error: '缺少必要参数' 
       }, { status: 400 });
     }
     
-    // 支持的文件类型
-    const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm'
-    ];
+    // 支持的扩展名（移动端 MIME 类型可能不准确，主要检查扩展名）
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'mov', '3gp'];
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
     
-    if (!allowedTypes.includes(fileType)) {
+    if (!allowedExtensions.includes(ext)) {
       return NextResponse.json({ 
         success: false, 
-        error: `不支持的文件类型: ${fileType}` 
+        error: `不支持的文件格式: ${ext}` 
       }, { status: 400 });
     }
     
     // 生成文件名
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
-    const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
     
     // 从 folder 中提取中文类目名
     const categoryMatch = folder.match(/age-category\/(.+)$/);
@@ -63,8 +60,9 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
     
-    // 判断媒体类型
-    const mediaType = fileType.startsWith('video/') ? 'video' : 'image';
+    // 判断媒体类型（基于扩展名）
+    const videoExtensions = ['mp4', 'webm', 'mov', '3gp'];
+    const mediaType = videoExtensions.includes(ext) ? 'video' : 'image';
     
     return NextResponse.json({
       success: true,

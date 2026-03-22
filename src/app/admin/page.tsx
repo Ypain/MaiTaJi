@@ -124,25 +124,18 @@ export default function AdminPage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // 支持的文件类型（仅支持浏览器原生可播放的格式）
-    const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm'
-    ];
-    
-    // 支持的扩展名（作为MIME类型的备选检测）
-    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm'];
+    // 支持的文件类型（仅做扩展名检查，MIME类型在移动端可能不准确）
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm', 'mov', '3gp'];
 
     const validFiles = files.filter(file => {
       // 获取文件扩展名
       const ext = file.name.split('.').pop()?.toLowerCase() || '';
       
-      // 检查MIME类型或扩展名
-      const typeValid = allowedTypes.includes(file.type);
+      // 移动端 MIME 类型可能不准确，主要依赖扩展名检查
       const extValid = allowedExtensions.includes(ext);
       
-      if (!typeValid && !extValid) {
-        toast.error(`文件 ${file.name} 类型不支持 (MIME: ${file.type || '未知'}, 扩展名: ${ext})，图片支持 jpg/png/gif/webp，视频仅支持 mp4/webm 格式`, { duration: 3000 });
+      if (!extValid) {
+        toast.error(`文件 ${file.name} 格式不支持，图片支持 jpg/png/gif/webp，视频支持 mp4/webm/mov/3gp`, { duration: 3000 });
         return false;
       }
       if (file.size > 300 * 1024 * 1024) {
@@ -434,7 +427,7 @@ export default function AdminPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm"
+                accept="image/*,video/*"
                 multiple
                 className="hidden"
                 onChange={handleFileSelect}
