@@ -38,6 +38,8 @@ export default function AdminPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<MediaItem | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 检测设备类型
@@ -313,6 +315,32 @@ export default function AdminPage() {
     setPreviewItem(null);
   };
 
+  // 删除已上传的内容
+  const handleDelete = async (item: MediaItem) => {
+    setDeletingId(item.id);
+    try {
+      const response = await fetch(`/api/age-category-content?id=${item.id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || '删除失败');
+      }
+
+      toast.success('删除成功');
+      setDeleteConfirm(null);
+      setPreviewItem(null);
+      fetchMediaItems();
+    } catch (error) {
+      console.error('删除失败:', error);
+      toast.error(`删除失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (checkingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -502,8 +530,19 @@ export default function AdminPage() {
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        <Video className="h-12 w-12 text-gray-400" />
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 relative overflow-hidden">
+                        <video
+                          src={item.media_url}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                          <div className="bg-white/90 rounded-full p-3 shadow-lg">
+                            <Video className="h-8 w-8 text-blue-600" />
+                          </div>
+                        </div>
                       </div>
                     )}
                     
@@ -563,26 +602,50 @@ export default function AdminPage() {
                 )}
               </div>
               
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload(previewItem);
-                }}
-                disabled={downloadingId === previewItem.id}
-                className="bg-blue-500 hover:bg-blue-600 px-8"
-              >
-                {downloadingId === previewItem.id ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    处理中...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Download className="h-4 w-4" />
-                    保存图片
-                  </span>
-                )}
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(previewItem);
+                  }}
+                  disabled={downloadingId === previewItem.id}
+                  className="bg-blue-500 hover:bg-blue-600 px-6"
+                >
+                  {downloadingId === previewItem.id ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      处理中...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      {previewItem.media_type === 'video' ? '保存视频' : '保存图片'}
+                    </span>
+                  )}
+                </Button>
+                
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteConfirm(previewItem);
+                  }}
+                  disabled={deletingId === previewItem.id}
+                  variant="destructive"
+                  className="px-6"
+                >
+                  {deletingId === previewItem.id ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      删除中...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      删除
+                    </span>
+                  )}
+                </Button>
+              </div>
               
               {/* 手机端提示 */}
               {isMobile() && (
@@ -590,6 +653,47 @@ export default function AdminPage() {
                   点击按钮后，长按图片选择保存到手机
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 删除确认对话框 */}
+      {deleteConfirm && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4"
+          onClick={() => setDeleteConfirm(null)}
+        >
+          <div 
+            className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">确认删除</h3>
+            <p className="text-gray-600 mb-4">
+              确定要删除这个{deleteConfirm.media_type === 'video' ? '视频' : '图片'}吗？此操作不可撤销。
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deletingId === deleteConfirm.id}
+              >
+                取消
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleDelete(deleteConfirm)}
+                disabled={deletingId === deleteConfirm.id}
+              >
+                {deletingId === deleteConfirm.id ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    删除中...
+                  </span>
+                ) : (
+                  '确认删除'
+                )}
+              </Button>
             </div>
           </div>
         </div>
