@@ -25,10 +25,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // 检查文件大小 (最大 50MB)
-    const maxSize = 50 * 1024 * 1024;
+    // 检查文件大小 (最大 300MB)
+    const maxSize = 300 * 1024 * 1024;
     if (file.size > maxSize) {
-      return NextResponse.json({ success: false, error: '文件大小不能超过50MB' }, { status: 400 });
+      return NextResponse.json({ success: false, error: '文件大小不能超过300MB' }, { status: 400 });
     }
     
     // 读取文件内容

@@ -129,8 +129,8 @@ export default function AdminPage() {
         toast.error(`文件 ${file.name} 类型不支持 (${file.type || '未知'})，仅支持 jpg/png/gif/webp/mp4/webm/mov`);
         return false;
       }
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error(`文件 ${file.name} 超过50MB限制`);
+      if (file.size > 300 * 1024 * 1024) {
+        toast.error(`文件 ${file.name} 超过300MB限制`);
         return false;
       }
       return true;
@@ -382,7 +382,7 @@ export default function AdminPage() {
                 <div className="flex flex-col items-center gap-2">
                   <Upload className="h-8 w-8 text-amber-500" />
                   <span className="text-amber-600 font-medium">选择图片或视频</span>
-                  <span className="text-xs text-gray-500">支持多选，单个文件最大50MB</span>
+                  <span className="text-xs text-gray-500">支持多选，单个文件最大300MB</span>
                 </div>
               </Button>
             </div>
