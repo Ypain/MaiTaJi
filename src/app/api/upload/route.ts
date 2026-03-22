@@ -13,9 +13,16 @@ export async function POST(request: NextRequest) {
     }
     
     // 检查文件类型
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv'
+    ];
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ success: false, error: '不支持的文件类型，仅支持 jpg/png/gif/webp/mp4/webm' }, { status: 400 });
+      console.log('不支持的文件类型:', file.type, '文件名:', file.name);
+      return NextResponse.json({ 
+        success: false, 
+        error: `不支持的文件类型: ${file.type || '未知'}，仅支持 jpg/png/gif/webp/mp4/webm/mov` 
+      }, { status: 400 });
     }
     
     // 检查文件大小 (最大 50MB)
