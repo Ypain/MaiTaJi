@@ -33,9 +33,11 @@ export async function POST(request: NextRequest) {
     const randomStr = Math.random().toString(36).substring(2, 8);
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     
-    // Storage 路径使用 URL 编码的中文，避免乱码
-    const encodedFolder = encodeURIComponent(folder);
-    const fileName = `${encodedFolder}/${timestamp}_${randomStr}.${ext}`;
+    // Storage 路径：分段编码，保留 / 分隔符
+    const fileName = folder
+      .split('/')
+      .map(part => encodeURIComponent(part))
+      .join('/') + `/${timestamp}_${randomStr}.${ext}`;
     
     // 使用 Supabase Storage 上传
     const supabase = getSupabaseClient();
