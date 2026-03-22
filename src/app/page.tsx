@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   Baby, 
   MessageCircleQuestion, 
@@ -13,9 +19,24 @@ import {
   TrendingUp,
   Syringe,
   Share2,
+  Link2,
   Check
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// 微信图标
+const WechatIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-6 w-6 text-white" fill="currentColor">
+    <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.27-.022-.407-.032zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z"/>
+  </svg>
+);
+
+// 小红书图标
+const XiaohongshuIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-6 w-6 text-white" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+  </svg>
+);
 
 // 功能卡片配置
 const features = [
@@ -88,34 +109,68 @@ const features = [
 
 export default function HomePage() {
   const [copied, setCopied] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const shareTitle = '麦塔记 - AI智能起名与母婴育儿服务平台';
+  const shareText = '免费AI智能起名、育儿问答、辅食推荐等服务，陪伴宝宝健康成长';
 
-  // 分享函数
-  const handleShare = async () => {
-    const shareData = {
-      title: '麦塔记 - AI智能起名与母婴育儿服务平台',
-      text: '免费AI智能起名、育儿问答、辅食推荐等服务，陪伴宝宝健康成长',
-      url: window.location.href,
-    };
-    
-    // 尝试使用原生分享
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return;
-      } catch {
-        // 用户取消分享，不做处理
-      }
-    }
-    
-    // 不支持原生分享或取消，复制链接
+  // 复制链接
+  const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       toast.success('链接已复制，快去分享给朋友吧！');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('复制失败，请手动复制链接');
     }
+  };
+
+  // 微信分享
+  const handleWechatShare = () => {
+    handleCopyLink();
+    toast.info('链接已复制，请打开微信粘贴分享给好友');
+    setShowShareDialog(false);
+  };
+
+  // 小红书分享
+  const handleXiaohongshuShare = () => {
+    handleCopyLink();
+    toast.info('链接已复制，请打开小红书发布笔记');
+    setShowShareDialog(false);
+  };
+
+  // 微博分享
+  const handleWeiboShare = () => {
+    const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle + ' - ' + shareText)}`;
+    window.open(weiboUrl, '_blank', 'width=600,height=400');
+    setShowShareDialog(false);
+  };
+
+  // QQ分享
+  const handleQQShare = () => {
+    const qqUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}&desc=${encodeURIComponent(shareText)}`;
+    window.open(qqUrl, '_blank', 'width=600,height=400');
+    setShowShareDialog(false);
+  };
+
+  // 打开分享弹窗
+  const handleShare = async () => {
+    // 尝试使用原生分享（移动端）
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // 用户取消分享，显示弹窗
+      }
+    }
+    setShowShareDialog(true);
   };
 
   return (
@@ -138,17 +193,8 @@ export default function HomePage() {
             onClick={handleShare}
             className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors"
           >
-            {copied ? (
-              <>
-                <Check className="h-4 w-4" />
-                <span className="text-sm">已复制</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="h-4 w-4" />
-                <span className="text-sm">分享</span>
-              </>
-            )}
+            <Share2 className="h-4 w-4" />
+            <span className="text-sm">分享</span>
           </button>
         </div>
         
@@ -192,6 +238,76 @@ export default function HomePage() {
           <p className="text-sm">© 2026 麦塔记. 记录美好时刻</p>
         </div>
       </footer>
+
+      {/* 分享弹窗 */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>分享到</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-4 gap-4 py-4">
+            {/* 复制链接 */}
+            <button
+              onClick={handleCopyLink}
+              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${copied ? 'bg-green-500' : 'bg-gray-500'}`}>
+                {copied ? (
+                  <Check className="h-6 w-6 text-white" />
+                ) : (
+                  <Link2 className="h-6 w-6 text-white" />
+                )}
+              </div>
+              <span className="text-xs text-gray-600">{copied ? '已复制' : '复制链接'}</span>
+            </button>
+
+            {/* 微信 */}
+            <button
+              onClick={handleWechatShare}
+              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                <WechatIcon />
+              </div>
+              <span className="text-xs text-gray-600">微信</span>
+            </button>
+
+            {/* 小红书 */}
+            <button
+              onClick={handleXiaohongshuShare}
+              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+                <XiaohongshuIcon />
+              </div>
+              <span className="text-xs text-gray-600">小红书</span>
+            </button>
+
+            {/* 微博 */}
+            <button
+              onClick={handleWeiboShare}
+              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-lg">微</span>
+              </div>
+              <span className="text-xs text-gray-600">微博</span>
+            </button>
+
+            {/* QQ */}
+            <button
+              onClick={handleQQShare}
+              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-lg">Q</span>
+              </div>
+              <span className="text-xs text-gray-600">QQ</span>
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 text-center">点击复制链接后，前往对应App粘贴分享</p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
