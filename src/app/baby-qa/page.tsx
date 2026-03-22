@@ -5,9 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MessageCircle, Loader2, Copy, Check, Share2 } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Loader2, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { ShareButton } from '@/components/ShareButton';
 
 export default function BabyQAPage() {
   const [question, setQuestion] = useState('');
@@ -165,16 +164,10 @@ export default function BabyQAPage() {
                 AI回答
               </CardTitle>
               {result && (
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={handleCopy} className="text-gray-500 hover:text-indigo-500 h-8 px-2">
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    <span className="ml-1 text-xs">复制</span>
-                  </Button>
-                  <ShareButton
-                    title="AI育儿问答"
-                    description={`问：${question}\n\n答：${result}`}
-                  />
-                </div>
+                <Button variant="ghost" size="sm" onClick={handleCopy} className="text-gray-500 hover:text-indigo-500 h-8 px-2">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <span className="ml-1 text-xs">复制</span>
+                </Button>
               )}
             </CardHeader>
             <CardContent className="pt-0">

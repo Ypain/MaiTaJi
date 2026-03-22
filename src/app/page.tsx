@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -13,6 +12,7 @@ import {
   TrendingUp,
   Syringe
 } from 'lucide-react';
+import { ShareButton } from '@/components/ShareButton';
 
 // 功能卡片配置
 const features = [
@@ -87,8 +87,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white relative">
         <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+          {/* 右上角分享按钮 */}
+          <div className="absolute top-4 right-4">
+            <ShareButton title="麦塔记" description="AI智能起名与母婴育儿服务平台" />
+          </div>
           <p className="text-lg text-white/90">记录美好时刻，陪伴宝宝成长</p>
         </div>
       </div>

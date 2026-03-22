@@ -14,9 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Baby, Loader2, Copy, Check, Share2 } from 'lucide-react';
+import { ArrowLeft, Baby, Loader2, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { ShareButton } from '@/components/ShareButton';
 
 export default function NicknamePage() {
   const [surname, setSurname] = useState('');
@@ -193,16 +192,10 @@ export default function NicknamePage() {
                 小名推荐
               </CardTitle>
               {result && (
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={handleCopy} className="text-gray-500 hover:text-purple-500 h-8 px-2">
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    <span className="ml-1 text-xs">复制</span>
-                  </Button>
-                  <ShareButton
-                    title="AI取小名结果"
-                    description={`我用麦塔记AI给宝宝起了个可爱的小名，快来看看吧！\n\n${result}`}
-                  />
-                </div>
+                <Button variant="ghost" size="sm" onClick={handleCopy} className="text-gray-500 hover:text-purple-500 h-8 px-2">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <span className="ml-1 text-xs">复制</span>
+                </Button>
               )}
             </CardHeader>
             <CardContent className="pt-0">

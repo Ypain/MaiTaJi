@@ -11,9 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Utensils, Loader2, Copy, Check, Share2 } from 'lucide-react';
+import { ArrowLeft, Utensils, Loader2, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { ShareButton } from '@/components/ShareButton';
 
 const months = [
   '6个月', '7个月', '8个月', '9个月', '10个月', '11个月',
@@ -180,16 +179,10 @@ export default function FoodPage() {
                 辅食推荐
               </CardTitle>
               {result && (
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={handleCopy} className="text-gray-500 hover:text-green-500 h-8 px-2">
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    <span className="ml-1 text-xs">复制</span>
-                  </Button>
-                  <ShareButton
-                    title="AI辅食推荐"
-                    description={`【${month}宝宝辅食推荐】\n\n${result}`}
-                  />
-                </div>
+                <Button variant="ghost" size="sm" onClick={handleCopy} className="text-gray-500 hover:text-green-500 h-8 px-2">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <span className="ml-1 text-xs">复制</span>
+                </Button>
               )}
             </CardHeader>
             <CardContent className="pt-0">
