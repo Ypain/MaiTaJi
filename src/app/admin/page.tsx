@@ -82,8 +82,7 @@ export default function AdminPage() {
   }, [router]);
 
   // 获取内容列表
-  const fetchMediaItems = async () => {
-    setLoading(true);
+  const fetchMediaItems = async (): Promise<void> => {
     try {
       const response = await fetch('/api/age-category-content');
       const result = await response.json();
@@ -96,14 +95,13 @@ export default function AdminPage() {
     } catch (error) {
       console.error('获取内容失败:', error);
       toast.error('获取内容失败', { duration: 3000 });
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (isAdmin) {
-      fetchMediaItems();
+      setLoading(true);
+      fetchMediaItems().finally(() => setLoading(false));
     }
   }, [isAdmin]);
 
@@ -216,9 +214,12 @@ export default function AdminPage() {
 
       // 上传完成后，刷新列表并等待完成
       if (successCount > 0) {
+        console.log('上传成功，正在刷新列表...');
         await fetchMediaItems();
+        console.log('列表刷新完成');
       }
 
+      // 清空待上传文件
       pendingPreviews.forEach(url => URL.revokeObjectURL(url));
       setPendingFiles([]);
       setPendingPreviews([]);
