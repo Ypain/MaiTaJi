@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { 
   Baby, 
   MessageCircleQuestion, 
+  MessageCircle,
   Utensils, 
   Sparkles, 
   Calculator,
@@ -39,6 +40,14 @@ const features = [
     icon: MessageCircleQuestion,
     color: 'from-blue-500 to-cyan-500',
     href: '/qa',
+  },
+  {
+    id: 'baby-qa',
+    title: 'AI育儿问答',
+    description: '专业解答育儿过程中的疑问',
+    icon: MessageCircle,
+    color: 'from-indigo-500 to-purple-500',
+    href: '/baby-qa',
   },
   {
     id: 'food',
