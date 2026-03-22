@@ -184,48 +184,53 @@ export default function AdminPage() {
       const file = pendingFiles[i];
 
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('folder', `age-category/${selectedCategory}`);
-        
         console.log(`[上传] 开始上传文件: ${file.name}, 大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
         
-        // 创建 AbortController 用于超时控制（5分钟超时）
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
-        
-        const uploadResponse = await fetch('/api/upload', {
+        // 第一步：获取上传签名 URL
+        const signatureResponse = await fetch('/api/upload-signature', {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            folder: `age-category/${selectedCategory}`,
+          }),
           credentials: 'include',
-          signal: controller.signal,
         });
         
-        clearTimeout(timeoutId);
+        const signatureResult = await signatureResponse.json();
         
-        // 检查响应类型
-        const contentType = uploadResponse.headers.get('content-type') || '';
-        console.log(`[上传] 响应状态: ${uploadResponse.status}, Content-Type: ${contentType}`);
-        
-        if (!contentType.includes('application/json')) {
-          const text = await uploadResponse.text();
-          console.error('[上传] 非JSON响应:', text.substring(0, 200));
-          throw new Error(`服务器返回非JSON响应 (状态码: ${uploadResponse.status})，可能是登录已过期，请刷新页面重试`);
+        if (!signatureResult.success) {
+          throw new Error(signatureResult.error || '获取上传签名失败');
         }
         
-        const uploadResult = await uploadResponse.json();
+        console.log(`[上传] 已获取签名URL，开始直传 Supabase...`);
         
-        if (!uploadResult.success) {
-          throw new Error(uploadResult.error || '上传失败');
+        // 第二步：直接上传到 Supabase Storage
+        const uploadResponse = await fetch(signatureResult.data.signedUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': file.type,
+          },
+          body: file,
+        });
+        
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          console.error('[上传] Supabase 直传失败:', errorText);
+          throw new Error(`上传到存储失败 (${uploadResponse.status})`);
         }
-
+        
+        console.log(`[上传] 文件已上传到存储，正在保存记录...`);
+        
+        // 第三步：保存记录到数据库
         const saveResponse = await fetch('/api/age-category-content', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             category: selectedCategory,
-            mediaUrl: uploadResult.data.url,
-            mediaType: uploadResult.data.mediaType,
+            mediaUrl: signatureResult.data.publicUrl,
+            mediaType: signatureResult.data.mediaType,
           }),
           credentials: 'include',
         });
@@ -233,7 +238,7 @@ export default function AdminPage() {
         const saveResult = await saveResponse.json();
         
         if (!saveResult.success) {
-          throw new Error(saveResult.error || '保存失败');
+          throw new Error(saveResult.error || '保存记录失败');
         }
 
         successCount++;
