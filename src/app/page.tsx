@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -12,7 +13,12 @@ import {
   TrendingUp,
   Syringe
 } from 'lucide-react';
-import { ShareButton } from '@/components/ShareButton';
+
+// 动态导入 ShareButton，禁用 SSR 避免 hydration 错误
+const ShareButton = dynamic(
+  () => import('@/components/ShareButton').then(mod => ({ default: mod.ShareButton })),
+  { ssr: false }
+);
 
 // 功能卡片配置
 const features = [
