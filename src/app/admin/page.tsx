@@ -64,11 +64,11 @@ export default function AdminPage() {
           if (data.user?.role === 'admin') {
             setIsAdmin(true);
           } else {
-            toast.error('无权限访问后台管理');
+            toast.error('无权限访问后台管理', { duration: 3000 });
             router.push('/');
           }
         } else {
-          toast.error('请先登录');
+          toast.error('请先登录', { duration: 3000 });
           router.push('/login');
         }
       } catch (error) {
@@ -91,11 +91,11 @@ export default function AdminPage() {
         setMediaItems(result.data || []);
       } else {
         console.error('获取内容失败:', result.error);
-        toast.error(result.error || '获取内容失败');
+        toast.error(result.error || '获取内容失败', { duration: 3000 });
       }
     } catch (error) {
       console.error('获取内容失败:', error);
-      toast.error('获取内容失败');
+      toast.error('获取内容失败', { duration: 3000 });
     } finally {
       setLoading(false);
     }
@@ -128,11 +128,11 @@ export default function AdminPage() {
     const validFiles = files.filter(file => {
       // 检查文件类型
       if (!allowedTypes.includes(file.type)) {
-        toast.error(`文件 ${file.name} 类型不支持 (${file.type || '未知'})，仅支持 jpg/png/gif/webp/mp4/webm/mov`);
+        toast.error(`文件 ${file.name} 类型不支持 (${file.type || '未知'})，仅支持 jpg/png/gif/webp/mp4/webm/mov`, { duration: 3000 });
         return false;
       }
       if (file.size > 300 * 1024 * 1024) {
-        toast.error(`文件 ${file.name} 超过300MB限制`);
+        toast.error(`文件 ${file.name} 超过300MB限制`, { duration: 3000 });
         return false;
       }
       return true;
@@ -158,7 +158,7 @@ export default function AdminPage() {
 
   const handleSubmit = async () => {
     if (pendingFiles.length === 0) {
-      toast.error('请先选择要上传的文件');
+      toast.error('请先选择要上传的文件', { duration: 3000 });
       return;
     }
 
@@ -204,18 +204,18 @@ export default function AdminPage() {
           }
 
           successCount++;
+          toast.success(`${file.name} 上传成功`, { duration: 3000 });
         } catch (error) {
           console.error(`文件 ${file.name} 上传失败:`, error);
-          toast.error(`${file.name} 上传失败: ${error instanceof Error ? error.message : '未知错误'}`);
+          toast.error(`${file.name} 上传失败`, { duration: 3000 });
           failCount++;
         }
       }
 
-      if (successCount > 0) {
-        toast.success(`成功上传 ${successCount} 个文件到「${selectedCategory}」类目`);
-      }
-      if (failCount > 0) {
-        toast.error(`${failCount} 个文件上传失败`);
+      if (successCount > 0 && failCount === 0) {
+        // 所有文件都上传成功，已在循环中单独提示
+      } else if (successCount > 0 && failCount > 0) {
+        // 部分成功
       }
 
       pendingPreviews.forEach(url => URL.revokeObjectURL(url));
@@ -225,7 +225,7 @@ export default function AdminPage() {
       fetchMediaItems();
     } catch (error) {
       console.error('上传失败:', error);
-      toast.error('上传过程出错');
+      toast.error('上传过程出错', { duration: 3000 });
     } finally {
       setUploading(false);
     }
@@ -240,7 +240,7 @@ export default function AdminPage() {
 
       // 手机端：直接提示长按保存
       if (isMobile()) {
-        toast.info('长按图片选择保存到手机');
+        toast.info('长按图片选择保存到手机', { duration: 3000 });
         setDownloadingId(null);
         return;
       }
@@ -269,7 +269,7 @@ export default function AdminPage() {
           await writable.write(blob);
           await writable.close();
           
-          toast.success('文件已保存');
+          toast.success('文件已保存', { duration: 3000 });
           setDownloadingId(null);
           return;
         } catch (err: any) {
@@ -298,10 +298,10 @@ export default function AdminPage() {
       document.body.removeChild(link);
       
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-      toast.success('下载已开始');
+      toast.success('下载已开始', { duration: 3000 });
     } catch (error) {
       console.error('下载失败:', error);
-      toast.error('下载失败，请重试');
+      toast.error('下载失败，请重试', { duration: 3000 });
     } finally {
       setDownloadingId(null);
     }
@@ -329,13 +329,13 @@ export default function AdminPage() {
         throw new Error(result.error || '删除失败');
       }
 
-      toast.success('删除成功');
+      toast.success('删除成功', { duration: 3000 });
       setDeleteConfirm(null);
       setPreviewItem(null);
       fetchMediaItems();
     } catch (error) {
       console.error('删除失败:', error);
-      toast.error(`删除失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      toast.error(`删除失败: ${error instanceof Error ? error.message : '未知错误'}`, { duration: 3000 });
     } finally {
       setDeletingId(null);
     }
