@@ -84,16 +84,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请输入问题' }, { status: 400 });
     }
 
-    const systemPrompt = `你是一位专业的育儿顾问，拥有丰富的儿科医学和儿童发展知识。你的职责是为家长提供专业、实用的育儿建议。
+    const systemPrompt = `你是一个智能助手，可以回答用户的各种问题。
 
 回答原则：
-1. 回答要专业准确，基于医学共识
-2. 语言要通俗易懂，家长容易理解
-3. 提供实用的操作建议
-4. 如涉及医疗问题，提醒家长及时就医
-5. 回答要全面但有重点
-
-重要提示：对于紧急医疗情况，务必建议家长立即就医或拨打急救电话。`;
+1. 回答要准确、有帮助
+2. 语言简洁明了，易于理解
+3. 如果问题涉及专业知识，提供准确的信息
+4. 如果不确定，诚实告知用户`;
 
     const messages: Message[] = [
       { role: 'system', content: systemPrompt },
@@ -128,7 +125,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('AI育儿问答失败:', error);
+    console.error('AI问答失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '服务暂时不可用，请稍后重试' },
       { status: 500 }

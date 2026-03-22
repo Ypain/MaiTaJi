@@ -10,9 +10,7 @@ import {
   Sparkles, 
   Calculator,
   TrendingUp,
-  Syringe,
-  Ruler,
-  Camera
+  Syringe
 } from 'lucide-react';
 
 // 功能卡片配置
@@ -36,8 +34,8 @@ const features = [
   },
   {
     id: 'qa',
-    title: 'AI育儿问答',
-    description: '智能解答育儿过程中的疑问',
+    title: 'AI问答',
+    description: '智能回答您的各种问题',
     icon: MessageCircleQuestion,
     color: 'from-blue-500 to-cyan-500',
     href: '/qa',
@@ -73,14 +71,6 @@ const features = [
     icon: Syringe,
     color: 'from-red-500 to-pink-500',
     href: '/vaccine',
-  },
-  {
-    id: 'milestone',
-    title: '成长里程碑',
-    description: '记录宝宝第一次的每个瞬间',
-    icon: Camera,
-    color: 'from-yellow-500 to-orange-500',
-    href: '/milestone',
   },
 ];
 

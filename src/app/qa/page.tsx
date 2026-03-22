@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MessageCircleQuestion, Loader2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Loader2, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function QAPage() {
@@ -83,10 +83,10 @@ export default function QAPage() {
   };
 
   const quickQuestions = [
-    '宝宝几个月开始添加辅食？',
-    '新生儿每天睡多长时间正常？',
-    '宝宝发烧怎么物理降温？',
-    '什么时候可以开始训练宝宝坐？',
+    '今天天气怎么样？',
+    '如何提高工作效率？',
+    '推荐几本好书',
+    '健康饮食的建议',
   ];
 
   return (
@@ -100,11 +100,11 @@ export default function QAPage() {
           </Link>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <MessageCircleQuestion className="h-6 w-6 text-white" />
+              <MessageCircle className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">AI育儿问答</h1>
-              <p className="text-sm text-white/80">智能解答育儿过程中的疑问</p>
+              <h1 className="text-2xl font-bold">AI问答</h1>
+              <p className="text-sm text-white/80">智能回答您的各种问题</p>
             </div>
           </div>
         </div>
@@ -116,11 +116,11 @@ export default function QAPage() {
           <CardContent className="pt-6 space-y-5">
             <div className="space-y-2">
               <Textarea
-                placeholder="请输入您的育儿问题，如：宝宝几个月开始添加辅食？"
+                placeholder="请输入您的问题，AI将为您解答..."
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 className="border-blue-200 focus:border-blue-400 focus:ring-blue-400 min-h-[120px]"
-                maxLength={500}
+                maxLength={1000}
               />
             </div>
 
@@ -160,7 +160,7 @@ export default function QAPage() {
           <Card className="mt-4 border-0 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between py-4">
               <CardTitle className="flex items-center gap-2 text-gray-800 text-base">
-                <MessageCircleQuestion className="h-5 w-5 text-blue-500" />
+                <MessageCircle className="h-5 w-5 text-blue-500" />
                 AI回答
               </CardTitle>
               {result && (
