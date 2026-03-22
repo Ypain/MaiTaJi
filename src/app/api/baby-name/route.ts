@@ -105,7 +105,9 @@ export async function POST(request: NextRequest) {
 - 偏好风格：${style || '没有特别偏好'}
 ${additionalInfo ? `- 其他期望：${additionalInfo}` : ''}
 
-请提供3-5个好名字，每个名字附上简短的寓意解释。请确保每次生成的名字都有所不同。`;
+[本次请求唯一标识：${Date.now()}-${Math.random().toString(36).slice(2)}]
+
+请提供3-5个好名字，每个名字附上简短的寓意解释。注意：每次生成必须完全不同的名字组合，不要重复之前的推荐。`;
 
     const messages: Message[] = [
       { role: 'system', content: systemPrompt },

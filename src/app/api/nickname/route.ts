@@ -102,7 +102,9 @@ export async function POST(request: NextRequest) {
 - 性别：${gender || '未指定'}
 - 风格偏好：${style || '没有特别偏好'}
 
-请提供5-8个可爱的小名，每个附上简短解释。`;
+[本次请求唯一标识：${Date.now()}-${Math.random().toString(36).slice(2)}]
+
+请提供5-8个可爱的小名，每个附上简短解释。注意：每次生成必须完全不同的小名组合，不要重复之前的推荐。`;
 
     const messages: Message[] = [
       { role: 'system', content: systemPrompt },
