@@ -16,6 +16,8 @@ import { Upload, Trash2, Video, Loader2, FolderOpen, Download, X, ZoomIn } from 
 import { toast } from 'sonner';
 import { AGE_CATEGORIES, type AgeCategory, type MediaType } from '@/lib/constants';
 
+import { supabaseBrowser } from '@/lib/supabase-browser';
+
 interface MediaItem {
   id: string;
   category: string;
@@ -199,19 +201,14 @@ export default function AdminPage() {
         
         console.log(`[上传] 已获取签名URL，开始直传 Supabase...`);
         
-        // 第二步：直接上传到 Supabase Storage（使用 POST + FormData）
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
+        // 第二步：使用 Supabase SDK 上传到 Storage
+        const { error: uploadError } = await supabaseBrowser.storage
+          .from('images')
+          .uploadToSignedUrl(signatureResult.data.path, signatureResult.data.token, file);
         
-        const uploadResponse = await fetch(signatureResult.data.signedUrl, {
-          method: 'POST',
-          body: uploadFormData,
-        });
-        
-        if (!uploadResponse.ok) {
-          const errorText = await uploadResponse.text();
-          console.error('[上传] Supabase 直传失败:', errorText);
-          throw new Error(`上传到存储失败 (${uploadResponse.status})`);
+        if (uploadError) {
+          console.error('[上传] Supabase 直传失败:', uploadError);
+          throw new Error(`上传到存储失败: ${uploadError.message}`);
         }
         
         console.log(`[上传] 文件已上传到存储，正在保存记录...`);
