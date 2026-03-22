@@ -424,7 +424,6 @@ export default function AdminPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,video/*"
                 multiple
                 className="hidden"
                 onChange={handleFileSelect}
