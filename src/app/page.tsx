@@ -89,15 +89,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-        <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <Baby className="h-8 w-8 text-white" />
-            </div>
-            <h1 className="text-4xl font-bold">麦塔记</h1>
-          </div>
-          <p className="text-lg text-white/90 mb-2">记录美好时刻，陪伴宝宝成长</p>
-          <p className="text-sm text-white/70">母婴育儿一站式服务平台</p>
+        <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+          <p className="text-lg text-white/90">记录美好时刻，陪伴宝宝成长</p>
         </div>
       </div>
 
