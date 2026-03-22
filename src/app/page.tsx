@@ -127,31 +127,80 @@ export default function HomePage() {
     }
   };
 
-  // 微信分享
-  const handleWechatShare = () => {
-    handleCopyLink();
-    toast.info('链接已复制，请打开微信粘贴分享给好友');
+  // 微信分享 - 尝试唤起微信App
+  const handleWechatShare = async () => {
+    // 先复制链接
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    
+    // 尝试唤起微信（仅移动端有效）
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      // 尝试通过 scheme 唤起微信
+      const weixinScheme = 'weixin://';
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = weixinScheme;
+      document.body.appendChild(iframe);
+      
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        toast.success('链接已复制，正在打开微信...');
+      }, 500);
+      
+      // 如果3秒后还在当前页面，说明唤起失败
+      setTimeout(() => {
+        toast.info('如果微信未打开，请手动打开微信分享');
+      }, 3000);
+    } else {
+      toast.success('链接已复制，请打开微信分享给好友');
+    }
     setShowShareDialog(false);
   };
 
   // 小红书分享
-  const handleXiaohongshuShare = () => {
-    handleCopyLink();
-    toast.info('链接已复制，请打开小红书发布笔记');
+  const handleXiaohongshuShare = async () => {
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    toast.success('链接已复制，请打开小红书发布笔记');
     setShowShareDialog(false);
   };
 
   // 微博分享
   const handleWeiboShare = () => {
-    const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle + ' - ' + shareText)}`;
-    window.open(weiboUrl, '_blank', 'width=600,height=400');
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // 移动端尝试唤起微博App
+      const weiboScheme = `sinaweibo://share?type=text&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`;
+      window.location.href = weiboScheme;
+      
+      // 备用：如果唤起失败，使用网页版
+      setTimeout(() => {
+        const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`;
+        window.open(weiboUrl, '_blank');
+      }, 2000);
+    } else {
+      // PC端直接打开网页版
+      const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`;
+      window.open(weiboUrl, '_blank', 'width=600,height=400');
+    }
     setShowShareDialog(false);
   };
 
   // QQ分享
   const handleQQShare = () => {
-    const qqUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}&desc=${encodeURIComponent(shareText)}`;
-    window.open(qqUrl, '_blank', 'width=600,height=400');
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // 移动端尝试唤起QQ
+      const qqScheme = `mqqapi://share/to_fri?file_type=news&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}&description=${encodeURIComponent(shareText)}`;
+      window.location.href = qqScheme;
+    } else {
+      // PC端使用网页版
+      const qqUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}&desc=${encodeURIComponent(shareText)}`;
+      window.open(qqUrl, '_blank', 'width=600,height=400');
+    }
     setShowShareDialog(false);
   };
 
