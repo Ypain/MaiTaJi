@@ -23,6 +23,7 @@ import {
   Check
 } from 'lucide-react';
 import { toast } from 'sonner';
+import FollowUs from '@/components/FollowUs';
 
 // 微信图标
 const WechatIcon = () => (
@@ -312,9 +313,12 @@ export default function HomePage() {
             );
           })}
         </div>
+        
+        {/* 公众号和视频号引流 */}
+        <FollowUs />
       </div>
 
-      {/* Footer - 已移到底部引流组件中 */}
+      {/* Footer */}
 
       {/* 分享弹窗 */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
