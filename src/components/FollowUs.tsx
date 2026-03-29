@@ -53,8 +53,8 @@ export default function FollowUs() {
           </div>
         </div>
         
-        <p className="text-center text-white/70 text-sm mt-6">
-          点击二维码可放大，长按识别关注
+        <p className="text-center text-white/90 text-sm mt-6">
+          点击二维码可放大，截图保存，微信识别
         </p>
       </div>
 
@@ -65,23 +65,23 @@ export default function FollowUs() {
           onClick={() => setShowGongzhonghao(false)}
         >
           <div 
-            className="bg-white rounded-2xl p-6 max-w-xs w-full text-center"
+            className="bg-white rounded-2xl p-8 max-w-xs w-full text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">关注公众号</h4>
-            <div className="w-48 h-48 mx-auto bg-gray-100 rounded-lg p-2 mb-4">
+            <h4 className="text-lg font-semibold text-gray-800 mb-6">关注公众号</h4>
+            <div className="w-52 h-52 mx-auto bg-gray-100 rounded-lg p-3 mb-6">
               <Image 
                 src="/qrcode-gongzhonghao.png" 
                 alt="麦塔记公众号" 
-                width={180} 
-                height={180}
-                className="rounded"
+                width={200} 
+                height={200}
+                className="rounded w-full h-full object-contain"
               />
             </div>
-            <p className="text-gray-800 font-medium mb-1">麦塔记</p>
-            <p className="text-gray-500 text-sm mb-4">长按识别二维码关注</p>
+            <p className="text-gray-800 font-medium text-lg mb-2">麦塔记</p>
+            <p className="text-gray-500 text-sm mb-6">截图微信识别二维码关注</p>
             <button 
-              className="w-full py-2 bg-gray-100 rounded-lg text-gray-600 text-sm hover:bg-gray-200 transition-colors"
+              className="w-full py-3 bg-gray-100 rounded-lg text-gray-600 text-sm hover:bg-gray-200 transition-colors"
               onClick={() => setShowGongzhonghao(false)}
             >
               关闭
@@ -97,23 +97,23 @@ export default function FollowUs() {
           onClick={() => setShowShipinhao(false)}
         >
           <div 
-            className="bg-white rounded-2xl p-6 max-w-xs w-full text-center"
+            className="bg-white rounded-2xl p-8 max-w-xs w-full text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">关注视频号</h4>
-            <div className="w-48 h-48 mx-auto bg-gray-100 rounded-lg p-2 mb-4">
+            <h4 className="text-lg font-semibold text-gray-800 mb-6">关注视频号</h4>
+            <div className="w-52 h-52 mx-auto bg-gray-100 rounded-lg p-3 mb-6">
               <Image 
                 src="/qrcode-shipinhao.png" 
                 alt="母婴帮手视频号" 
-                width={180} 
-                height={180}
-                className="rounded"
+                width={200} 
+                height={200}
+                className="rounded w-full h-full object-contain"
               />
             </div>
-            <p className="text-gray-800 font-medium mb-1">母婴帮手</p>
-            <p className="text-gray-500 text-sm mb-4">长按识别二维码关注</p>
+            <p className="text-gray-800 font-medium text-lg mb-2">母婴帮手</p>
+            <p className="text-gray-500 text-sm mb-6">截图微信识别二维码关注</p>
             <button 
-              className="w-full py-2 bg-gray-100 rounded-lg text-gray-600 text-sm hover:bg-gray-200 transition-colors"
+              className="w-full py-3 bg-gray-100 rounded-lg text-gray-600 text-sm hover:bg-gray-200 transition-colors"
               onClick={() => setShowShipinhao(false)}
             >
               关闭
