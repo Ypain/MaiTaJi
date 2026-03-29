@@ -54,7 +54,7 @@ export default function FollowUs() {
         </div>
         
         <p className="text-center text-white/90 text-sm mt-6">
-          点击二维码可放大，截图微信识别关注
+          点击二维码可放大，长按识别关注
         </p>
       </div>
 
