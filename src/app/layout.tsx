@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import { Toaster } from '@/components/ui/sonner';
+import FollowUs from '@/components/FollowUs';
 
 export const metadata: Metadata = {
   title: {
@@ -63,6 +64,7 @@ export default function RootLayout({
         <main className="min-h-[calc(100vh-3.5rem)]">
           {children}
         </main>
+        <FollowUs />
         <Toaster />
         {/* 结构化数据 - SEO */}
         <script

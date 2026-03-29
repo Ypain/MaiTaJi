@@ -314,12 +314,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-6 mt-8">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-sm">© 2026 麦塔记. 记录美好时刻</p>
-        </div>
-      </footer>
+      {/* Footer - 已移到底部引流组件中 */}
 
       {/* 分享弹窗 */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
