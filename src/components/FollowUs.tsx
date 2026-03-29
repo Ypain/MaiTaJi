@@ -79,7 +79,7 @@ export default function FollowUs() {
               />
             </div>
             <p className="text-gray-800 font-medium text-lg mb-2">麦塔记</p>
-            <p className="text-gray-500 text-sm mb-6">截图微信识别二维码关注</p>
+            <p className="text-gray-500 text-sm mb-6">长按识别二维码关注</p>
             <button 
               className="w-full py-3 bg-gray-100 rounded-lg text-gray-600 text-sm hover:bg-gray-200 transition-colors"
               onClick={() => setShowGongzhonghao(false)}
@@ -111,7 +111,7 @@ export default function FollowUs() {
               />
             </div>
             <p className="text-gray-800 font-medium text-lg mb-2">母婴帮手</p>
-            <p className="text-gray-500 text-sm mb-6">截图微信识别二维码关注</p>
+            <p className="text-gray-500 text-sm mb-6">长按识别二维码关注</p>
             <button 
               className="w-full py-3 bg-gray-100 rounded-lg text-gray-600 text-sm hover:bg-gray-200 transition-colors"
               onClick={() => setShowShipinhao(false)}
