@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -19,8 +19,6 @@ import {
   TrendingUp,
   Syringe,
   Share2,
-  Link2,
-  Check
 } from 'lucide-react';
 import FollowUs from '@/components/FollowUs';
 
@@ -108,88 +106,42 @@ const features = [
 ];
 
 export default function HomePage() {
-  const [copied, setCopied] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  
-  const shareTitle = '麦塔记 - AI智能起名与母婴育儿服务平台';
-  const shareText = '免费AI智能起名、育儿问答、辅食推荐等服务，陪伴宝宝健康成长';
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // 检测是否为移动端
+    const checkMobile = () => {
+      setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // 获取当前URL
   const getShareUrl = () => {
     if (typeof window !== 'undefined') {
       return window.location.href;
     }
-    return 'https://www.maitaji.com';
+    return 'https://www.maitaq.com';
   };
 
-  // 复制链接 - 兼容多种环境
+  // 复制链接
   const handleCopyLink = async () => {
     const url = getShareUrl();
-    
-    // 方法1: 使用 Clipboard API（现代浏览器）
     if (navigator.clipboard && navigator.clipboard.writeText) {
       try {
         await navigator.clipboard.writeText(url);
-        setCopied(true);
-        
-        setTimeout(() => setCopied(false), 2000);
-        return;
       } catch {
-        // 继续尝试备用方法
+        // 忽略错误
       }
     }
-    
-    // 方法2: 使用 execCommand（兼容旧浏览器）
-    try {
-      const textArea = document.createElement('textarea');
-      textArea.value = url;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-      textArea.style.top = '-9999px';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      const success = document.execCommand('copy');
-      document.body.removeChild(textArea);
-      
-      if (success) {
-        setCopied(true);
-        
-        setTimeout(() => setCopied(false), 2000);
-        return;
-      }
-    } catch {
-      // 忽略错误
-    }
-    
-    // 方法3: 都失败了，提示用户手动复制
-    
   };
 
-  // 微信分享 - 尝试唤起微信App
+  // 微信分享
   const handleWechatShare = async () => {
-    // 先复制链接
     await handleCopyLink();
-    
-    // 尝试唤起微信（仅移动端有效）
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (isMobile) {
-      // 尝试通过 scheme 唤起微信
-      const weixinScheme = 'weixin://';
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = weixinScheme;
-      document.body.appendChild(iframe);
-      
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 500);
-      
-      // 如果3秒后还在当前页面，说明唤起失败
-      setTimeout(() => {
-        
-      }, 3000);
-    }
     setShowShareDialog(false);
   };
 
@@ -199,52 +151,14 @@ export default function HomePage() {
     setShowShareDialog(false);
   };
 
-  // 微博分享
-  const handleWeiboShare = () => {
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // 移动端尝试唤起微博App
-      const weiboScheme = `sinaweibo://share?type=text&url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}`;
-      window.location.href = weiboScheme;
-      
-      // 备用：如果唤起失败，使用网页版
-      setTimeout(() => {
-        const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}`;
-        window.open(weiboUrl, '_blank');
-      }, 2000);
-    } else {
-      // PC端直接打开网页版
-      const weiboUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}`;
-      window.open(weiboUrl, '_blank', 'width=600,height=400');
-    }
-    setShowShareDialog(false);
-  };
-
-  // QQ分享
-  const handleQQShare = () => {
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // 移动端尝试唤起QQ
-      const qqScheme = `mqqapi://share/to_fri?file_type=news&url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}&description=${encodeURIComponent(shareText)}`;
-      window.location.href = qqScheme;
-    } else {
-      // PC端使用网页版
-      const qqUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(getShareUrl())}&title=${encodeURIComponent(shareTitle)}&desc=${encodeURIComponent(shareText)}`;
-      window.open(qqUrl, '_blank', 'width=600,height=400');
-    }
-    setShowShareDialog(false);
-  };
-
   // 打开分享弹窗
   const handleShare = async () => {
     // 尝试使用原生分享（移动端）
     if (navigator.share) {
       try {
         await navigator.share({
-          title: shareTitle,
-          text: shareText,
+          title: '麦塔记 - AI智能起名与母婴育儿服务平台',
+          text: '免费AI智能起名、育儿问答、辅食推荐等服务，陪伴宝宝健康成长',
           url: getShareUrl(),
         });
         return;
@@ -293,13 +207,16 @@ export default function HomePage() {
             <span className="w-1 h-6 bg-amber-500 rounded"></span>
             全部功能
           </h2>
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors"
-          >
-            <Share2 className="h-4 w-4" />
-            <span className="text-sm">分享</span>
-          </button>
+          {/* 分享按钮只在移动端显示 */}
+          {isMobile && (
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors"
+            >
+              <Share2 className="h-4 w-4" />
+              <span className="text-sm">分享</span>
+            </button>
+          )}
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -339,40 +256,40 @@ export default function HomePage() {
         <FollowUs />
       </div>
 
-      {/* Footer */}
+      {/* 分享弹窗 - 只在移动端显示 */}
+      {isMobile && (
+        <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>分享到</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-6 py-4">
+              {/* 微信 */}
+              <button
+                onClick={handleWechatShare}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
+              >
+                <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center">
+                  <WechatIcon />
+                </div>
+                <span className="text-sm text-gray-700 font-medium">微信</span>
+              </button>
 
-      {/* 分享弹窗 */}
-      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>分享到</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-6 py-4">
-            {/* 微信 */}
-            <button
-              onClick={handleWechatShare}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
-            >
-              <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center">
-                <WechatIcon />
-              </div>
-              <span className="text-sm text-gray-700 font-medium">微信</span>
-            </button>
-
-            {/* 小红书 */}
-            <button
-              onClick={handleXiaohongshuShare}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
-            >
-              <div className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center">
-                <XiaohongshuIcon />
-              </div>
-              <span className="text-sm text-gray-700 font-medium">小红书</span>
-            </button>
-          </div>
-          <p className="text-xs text-gray-400 text-center">点击复制链接后，前往App粘贴分享</p>
-        </DialogContent>
-      </Dialog>
+              {/* 小红书 */}
+              <button
+                onClick={handleXiaohongshuShare}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
+              >
+                <div className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center">
+                  <XiaohongshuIcon />
+                </div>
+                <span className="text-sm text-gray-700 font-medium">小红书</span>
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 text-center">点击复制链接后，前往App粘贴分享</p>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
