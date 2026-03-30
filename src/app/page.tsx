@@ -349,7 +349,7 @@ export default function HomePage() {
                     <WechatIcon />
                   )}
                 </div>
-                <span className="text-sm text-gray-700 font-medium">{wechatCopied ? '已复制' : '微信'}</span>
+                <span className="text-sm text-gray-700 font-medium">{wechatCopied ? '已复制，去微信' : '微信'}</span>
               </button>
 
               {/* 小红书 */}
@@ -363,7 +363,7 @@ export default function HomePage() {
                 <span className="text-sm text-gray-700 font-medium">小红书</span>
               </button>
             </div>
-            <p className="text-xs text-gray-400 text-center">点击复制链接后，前往App粘贴分享</p>
+            <p className="text-xs text-gray-400 text-center">复制链接后，打开微信发送给朋友</p>
           </DialogContent>
         </Dialog>
       )}
