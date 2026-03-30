@@ -111,6 +111,7 @@ export default function HomePage() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [wechatCopied, setWechatCopied] = useState(false);
 
   useEffect(() => {
     // 检测是否为移动端
@@ -170,15 +171,36 @@ export default function HomePage() {
 
   // 微信分享
   const handleWechatShare = async () => {
-    await handleCopyLink();
+    const url = getShareUrl();
     
-    // 尝试唤起微信
+    // 复制链接
     try {
-      window.location.href = 'weixin://';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setWechatCopied(true);
+      setTimeout(() => setWechatCopied(false), 2000);
     } catch {
       // 忽略错误
     }
-    setShowShareDialog(false);
+    
+    // 延迟尝试唤起微信
+    setTimeout(() => {
+      try {
+        window.location.href = 'weixin://';
+      } catch {
+        // 忽略错误
+      }
+    }, 300);
   };
 
   // 小红书分享
@@ -320,10 +342,14 @@ export default function HomePage() {
                 onClick={handleWechatShare}
                 className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
               >
-                <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center">
-                  <WechatIcon />
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${wechatCopied ? 'bg-green-500' : 'bg-green-500'}`}>
+                  {wechatCopied ? (
+                    <Check className="h-6 w-6 text-white" />
+                  ) : (
+                    <WechatIcon />
+                  )}
                 </div>
-                <span className="text-sm text-gray-700 font-medium">微信</span>
+                <span className="text-sm text-gray-700 font-medium">{wechatCopied ? '已复制' : '微信'}</span>
               </button>
 
               {/* 小红书 */}
