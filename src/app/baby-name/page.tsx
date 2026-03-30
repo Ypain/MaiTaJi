@@ -246,6 +246,34 @@ export default function BabyNamePage() {
           </Card>
         )}
 
+        {/* 关注引导 - 结果出现后显示 */}
+        {result && !loading && (
+          <Card className="mt-4 border-0 shadow-lg bg-gradient-to-r from-amber-50 to-orange-50">
+            <CardContent className="py-4 text-center">
+              <p className="text-gray-700 text-sm mb-3">想要更详细的名字解析？</p>
+              <p className="text-amber-600 font-medium">关注公众号「麦塔记」获取专业解读</p>
+              <p className="text-gray-400 text-xs mt-2">回复"取名"即可获得详细分析</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 重新生成按钮 */}
+        {result && !loading && (
+          <Button
+            onClick={() => {
+              setResult('');
+              setSurname('');
+              setGender('');
+              setStyle('');
+              setAdditionalInfo('');
+            }}
+            variant="outline"
+            className="w-full mt-4 border-amber-300 text-amber-600 hover:bg-amber-50"
+          >
+            重新起名
+          </Button>
+        )}
+
         {/* Tips */}
         <div className="mt-4 text-center text-xs text-gray-400">
           <p>提示：AI起名仅供参考，最终名字由您决定</p>

@@ -265,6 +265,28 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* 信任背书 */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex justify-center gap-8 text-center">
+            <div>
+              <p className="text-2xl font-bold text-amber-600">10万+</p>
+              <p className="text-xs text-gray-500">用户使用</p>
+            </div>
+            <div className="w-px bg-gray-200"></div>
+            <div>
+              <p className="text-2xl font-bold text-amber-600">50万+</p>
+              <p className="text-xs text-gray-500">取名生成</p>
+            </div>
+            <div className="w-px bg-gray-200"></div>
+            <div>
+              <p className="text-2xl font-bold text-amber-600">98%</p>
+              <p className="text-xs text-gray-500">好评率</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Features Grid */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
@@ -326,67 +348,30 @@ export default function HomePage() {
           <DialogHeader>
             <DialogTitle>分享到</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-4 gap-4 py-4">
-            {/* 复制链接 */}
-            <button
-              onClick={handleCopyLink}
-              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${copied ? 'bg-green-500' : 'bg-gray-500'}`}>
-                {copied ? (
-                  <Check className="h-6 w-6 text-white" />
-                ) : (
-                  <Link2 className="h-6 w-6 text-white" />
-                )}
-              </div>
-              <span className="text-xs text-gray-600">{copied ? '已复制' : '复制链接'}</span>
-            </button>
-
+          <div className="grid grid-cols-2 gap-6 py-4">
             {/* 微信 */}
             <button
               onClick={handleWechatShare}
-              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
             >
-              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center">
                 <WechatIcon />
               </div>
-              <span className="text-xs text-gray-600">微信</span>
+              <span className="text-sm text-gray-700 font-medium">微信</span>
             </button>
 
             {/* 小红书 */}
             <button
               onClick={handleXiaohongshuShare}
-              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
             >
-              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center">
                 <XiaohongshuIcon />
               </div>
-              <span className="text-xs text-gray-600">小红书</span>
-            </button>
-
-            {/* 微博 */}
-            <button
-              onClick={handleWeiboShare}
-              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">微</span>
-              </div>
-              <span className="text-xs text-gray-600">微博</span>
-            </button>
-
-            {/* QQ */}
-            <button
-              onClick={handleQQShare}
-              className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">Q</span>
-              </div>
-              <span className="text-xs text-gray-600">QQ</span>
+              <span className="text-sm text-gray-700 font-medium">小红书</span>
             </button>
           </div>
-          <p className="text-xs text-gray-400 text-center">点击复制链接后，前往对应App粘贴分享</p>
+          <p className="text-xs text-gray-400 text-center">点击复制链接后，前往App粘贴分享</p>
         </DialogContent>
       </Dialog>
     </div>
