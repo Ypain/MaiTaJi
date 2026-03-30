@@ -19,6 +19,8 @@ import {
   TrendingUp,
   Syringe,
   Share2,
+  Link2,
+  Check,
 } from 'lucide-react';
 import FollowUs from '@/components/FollowUs';
 
@@ -108,6 +110,7 @@ const features = [
 export default function HomePage() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // 检测是否为移动端
@@ -130,18 +133,51 @@ export default function HomePage() {
   // 复制链接
   const handleCopyLink = async () => {
     const url = getShareUrl();
+    
+    // 方法1: 使用 Clipboard API
     if (navigator.clipboard && navigator.clipboard.writeText) {
       try {
         await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
       } catch {
-        // 忽略错误
+        // 继续尝试备用方法
       }
+    }
+    
+    // 方法2: 使用 execCommand
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const success = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      // 忽略错误
     }
   };
 
   // 微信分享
   const handleWechatShare = async () => {
     await handleCopyLink();
+    
+    // 尝试唤起微信
+    try {
+      window.location.href = 'weixin://';
+    } catch {
+      // 忽略错误
+    }
     setShowShareDialog(false);
   };
 
@@ -263,7 +299,22 @@ export default function HomePage() {
             <DialogHeader>
               <DialogTitle>分享到</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-6 py-4">
+            <div className="grid grid-cols-3 gap-4 py-4">
+              {/* 复制链接 */}
+              <button
+                onClick={handleCopyLink}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100"
+              >
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${copied ? 'bg-green-500' : 'bg-gray-500'}`}>
+                  {copied ? (
+                    <Check className="h-6 w-6 text-white" />
+                  ) : (
+                    <Link2 className="h-6 w-6 text-white" />
+                  )}
+                </div>
+                <span className="text-sm text-gray-700 font-medium">{copied ? '已复制' : '复制链接'}</span>
+              </button>
+
               {/* 微信 */}
               <button
                 onClick={handleWechatShare}
