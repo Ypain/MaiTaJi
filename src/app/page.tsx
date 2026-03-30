@@ -22,7 +22,6 @@ import {
   Link2,
   Check
 } from 'lucide-react';
-import { toast } from 'sonner';
 import FollowUs from '@/components/FollowUs';
 
 // 微信图标
@@ -132,7 +131,7 @@ export default function HomePage() {
       try {
         await navigator.clipboard.writeText(url);
         setCopied(true);
-        toast.success('链接已复制，快去分享给朋友吧！');
+        
         setTimeout(() => setCopied(false), 2000);
         return;
       } catch {
@@ -155,7 +154,7 @@ export default function HomePage() {
       
       if (success) {
         setCopied(true);
-        toast.success('链接已复制，快去分享给朋友吧！');
+        
         setTimeout(() => setCopied(false), 2000);
         return;
       }
@@ -164,7 +163,7 @@ export default function HomePage() {
     }
     
     // 方法3: 都失败了，提示用户手动复制
-    toast.error('复制失败，请手动复制链接');
+    
   };
 
   // 微信分享 - 尝试唤起微信App
@@ -188,7 +187,7 @@ export default function HomePage() {
       
       // 如果3秒后还在当前页面，说明唤起失败
       setTimeout(() => {
-        toast.info('如果微信未打开，请手动打开微信分享');
+        
       }, 3000);
     }
     setShowShareDialog(false);

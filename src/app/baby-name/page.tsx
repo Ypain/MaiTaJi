@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Baby, Sparkles, Loader2, Copy, Check } from 'lucide-react';
-import { toast } from 'sonner';
 
 export default function BabyNamePage() {
   const [surname, setSurname] = useState('');
@@ -29,7 +28,7 @@ export default function BabyNamePage() {
 
   const handleSubmit = async () => {
     if (!surname.trim()) {
-      toast.error('请输入姓氏');
+      
       return;
     }
 
@@ -81,11 +80,8 @@ export default function BabyNamePage() {
           }
         }
       }
-
-      toast.success('起名完成！');
     } catch (error) {
       console.error('起名失败:', error);
-      toast.error('起名服务暂时不可用，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -95,7 +91,6 @@ export default function BabyNamePage() {
     if (result) {
       await navigator.clipboard.writeText(result);
       setCopied(true);
-      toast.success('已复制到剪贴板');
       setTimeout(() => setCopied(false), 2000);
     }
   };

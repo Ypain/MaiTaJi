@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, MessageCircle, Loader2, Copy, Check } from 'lucide-react';
-import { toast } from 'sonner';
 
 export default function QAPage() {
   const [question, setQuestion] = useState('');
@@ -16,7 +15,7 @@ export default function QAPage() {
 
   const handleSubmit = async () => {
     if (!question.trim()) {
-      toast.error('请输入您的问题');
+      
       return;
     }
 
@@ -64,10 +63,10 @@ export default function QAPage() {
         }
       }
 
-      toast.success('回答完成！');
+      
     } catch (error) {
       console.error('问答失败:', error);
-      toast.error('服务暂时不可用，请稍后重试');
+      
     } finally {
       setLoading(false);
     }
@@ -77,7 +76,7 @@ export default function QAPage() {
     if (result) {
       await navigator.clipboard.writeText(result);
       setCopied(true);
-      toast.success('已复制到剪贴板');
+      
       setTimeout(() => setCopied(false), 2000);
     }
   };

@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ArrowLeft, Utensils, Loader2, Copy, Check } from 'lucide-react';
-import { toast } from 'sonner';
 
 const months = [
   '6个月', '7个月', '8个月', '9个月', '10个月', '11个月',
@@ -28,7 +27,7 @@ export default function FoodPage() {
 
   const handleSubmit = async () => {
     if (!month) {
-      toast.error('请选择宝宝月龄');
+      
       return;
     }
 
@@ -79,10 +78,10 @@ export default function FoodPage() {
         }
       }
 
-      toast.success('推荐完成！');
+      
     } catch (error) {
       console.error('推荐失败:', error);
-      toast.error('服务暂时不可用，请稍后重试');
+      
     } finally {
       setLoading(false);
     }
@@ -92,7 +91,7 @@ export default function FoodPage() {
     if (result) {
       await navigator.clipboard.writeText(result);
       setCopied(true);
-      toast.success('已复制到剪贴板');
+      
       setTimeout(() => setCopied(false), 2000);
     }
   };
